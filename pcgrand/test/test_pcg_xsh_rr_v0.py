@@ -50,6 +50,17 @@ def count_samples_generated(gen):
 
 
 class Test_PCG_XSH_RR_V0(unittest.TestCase):
+    def test_creation_without_seed(self):
+        gen1 = PCG_XSH_RR_V0()
+        gen2 = PCG_XSH_RR_V0()
+
+        sample1 = [gen1.random() for _ in range(10)]
+        sample2 = [gen2.random() for _ in range(10)]
+
+        # Possible in theory for these two samples to be identical; vanishingly
+        # unlikely in practice.
+        self.assertNotEqual(sample1, sample2)
+
     def test_reproducibility(self):
         gen = PCG_XSH_RR_V0(seed=12345, sequence=0)
         die_rolls = [gen.randint(1, 6) for _ in range(20)]
@@ -130,6 +141,15 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         gen.setstate(state)
         samples3 = [gen.random() for _ in range(10)]
         self.assertEqual(samples2, samples3)
+
+    def test_restore_state_from_different_generator(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=27)
+        state = gen.getstate()
+
+        bad_version = 'pcgrand.PCG_XSH_RR_V1'
+        bad_state = (bad_version,) + state[1:]
+        with self.assertRaises(ValueError):
+            gen.setstate(bad_state)
 
     def test_state_preserves_gauss(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=27)
