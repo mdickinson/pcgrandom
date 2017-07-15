@@ -4,6 +4,7 @@
 #     the appropriate class to use.
 # XXX References: O'Neill, L'Ecuyer, Knuth MMIX.
 # XXX Think harder about reproducibility; document it.
+# XXX Support Python 2.6? 3.3?
 
 import operator as _operator
 import os as _os
@@ -104,18 +105,16 @@ class PCG_XSH_RR_V0(_random.Random):
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
         version = state[0]
-
-        if version == self.VERSION:
-            parameters, state, gauss_next = state[1:]
-            self.gauss_next = gauss_next
-            self._state = state
-            self._multiplier, self._increment = parameters
-        else:
+        if version != self.VERSION:
             raise ValueError(
-                "state with version %r passed to "
-                "setstate() of version %r" %
-                (version, self.VERSION)
+                "state with version {0!r} passed to "
+                "setstate() of version {1!r}".format(version, self.VERSION)
             )
+
+        parameters, state, gauss_next = state[1:]
+        self.gauss_next = gauss_next
+        self._state = state
+        self._multiplier, self._increment = parameters
 
     def getrandbits(self, k):
         """Generate an integer in the range [0, 2**k).
@@ -141,11 +140,11 @@ class PCG_XSH_RR_V0(_random.Random):
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""
 
-        # Sequence has period 2**64-1, so we can reduce modulo 2**64.
+        # Reduce n modulo the period of the sequence.
         n &= _UINT64_MASK
         a, c = self._multiplier, self._increment
 
-        # Left-to-right algorithm.
+        # Left-to-right powering algorithm.
         an, cn = 1, 0
         for bit in format(n, 'b'):
             an, cn = an * an & _UINT64_MASK, an * cn + cn & _UINT64_MASK
@@ -174,7 +173,8 @@ class PCG_XSH_RR_V0(_random.Random):
             if istart > 0:
                 return self._randbelow(istart)
             else:
-                raise ValueError("empty range for randrange()")
+                raise ValueError(
+                    "empty range for randrange({0})".format(istart))
 
         istop = _operator.index(stop)
         width = istop - istart
@@ -183,16 +183,17 @@ class PCG_XSH_RR_V0(_random.Random):
                 return istart + self._randbelow(width)
             else:
                 raise ValueError(
-                    "empty range for randrange() (%d,%d, %d)"
-                    % (istart, istop, width)
-                )
+                    "empty range for randrange({0}, {1})".format(
+                        istart, istop))
 
         istep = _operator.index(step)
         if istep == 0:
             raise ValueError("zero step for randrange()")
         n = -(-width // istep)
         if n <= 0:
-            raise ValueError("empty range for randrange()")
+            raise ValueError(
+                "empty range for randrange({0}, {1}, {2})".format(
+                    istart, istop, istep))
 
         return istart + istep * self._randbelow(n)
 
