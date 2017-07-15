@@ -5,7 +5,6 @@
 #     the appropriate class to use.
 # XXX References: O'Neill, L'Ecuyer, Knuth MMIX.
 # XXX Think harder about reproducibility; document it.
-# XXX Implement jumpahead.
 
 import operator as _operator
 import os as _os
@@ -137,6 +136,22 @@ class PCG_XSH_RR_V0(_random.Random):
         for _ in range(numwords):
             acc = acc << 32 | self._next_word()
         return acc >> excess_bits
+
+    def jumpahead(self, n):
+        """Jump ahead or back in the sequence of random numbers."""
+
+        # Sequence has period 2**64-1, so we can reduce modulo 2**64.
+        n &= _UINT64_MASK
+        a, c = self._multiplier, self._increment
+
+        # Left-to-right algorithm.
+        an, cn = 1, 0
+        for bit in format(n, 'b'):
+            an, cn = an * an & _UINT64_MASK, an * cn + cn & _UINT64_MASK
+            if bit == '1':
+                an, cn = a * an & _UINT64_MASK, a * cn + c & _UINT64_MASK
+
+        self._state = (self._state * an + cn) & _UINT64_MASK
 
     # Private helper functions.
 

@@ -268,3 +268,32 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
 
         samples = [gen.randrange(27) for _ in range(13)]
         self.assertEqual(wordgen.call_count, 41)
+
+    def test_jumpahead(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        # Generate samples, each sample consuming exactly one word
+        # from the core generator.
+        samples = [gen.randrange(2**32) for _ in range(1000)]
+
+        # Rewind, check we can produce the exact same samples.
+        gen.jumpahead(-1000)
+        same_again = [gen.randrange(2**32) for _ in range(1000)]
+        self.assertEqual(samples, same_again)
+
+        # Corner case: jumpahead(0) should work.
+        state_before = gen.getstate()
+        gen.jumpahead(0)
+        state_after = gen.getstate()
+        self.assertEqual(state_before, state_after)
+
+        # Now jump around randomly within the collection of samples. Use a
+        # separate generator for the positions to jump to.
+        posgen = PCG_XSH_RR_V0(seed=19733, sequence=22)
+
+        current_pos = 1000
+        for _ in range(100):
+            next_pos = posgen.randrange(1000)
+            gen.jumpahead(next_pos - current_pos)
+            sample = gen.randrange(2**32)
+            self.assertEqual(sample, samples[next_pos])
+            current_pos = next_pos + 1
