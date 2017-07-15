@@ -8,7 +8,7 @@ import contextlib
 import math
 import unittest
 
-from pcgrand.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
+from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
 
 
 # Sequences used for detecting reproducibility regressions.
@@ -169,7 +169,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=27)
         state = gen.getstate()
 
-        bad_version = 'pcgrand.PCG_XSH_RR_V1'
+        bad_version = 'pcgrandom.PCG_XSH_RR_V1'
         bad_state = (bad_version,) + state[1:]
         with self.assertRaises(ValueError):
             gen.setstate(bad_state)

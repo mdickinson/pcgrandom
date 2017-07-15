@@ -53,7 +53,7 @@ class PCG_XSH_RR_V0(_random.Random):
     PCG-XSH-RR, sitting on a 64-bit LCG from Knuth.
     """
 
-    VERSION = "pcgrand.PCG_XSH_RR_V0"
+    VERSION = "pcgrandom.PCG_XSH_RR_V0"
 
     def __init__(self, seed=None, sequence=0):
         multiplier = _KNUTH_MMIX_LCG_MULTIPLIER
