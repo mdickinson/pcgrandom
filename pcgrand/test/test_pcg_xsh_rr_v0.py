@@ -1,6 +1,7 @@
 """
 Tests for the PCG_XSH_RR_V0 generator.
 """
+from __future__ import division
 
 import collections
 import contextlib
@@ -10,7 +11,7 @@ import unittest
 from pcgrand.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
 
 
-# Sequences used for checking reproducibility regressions.
+# Sequences used for detecting reproducibility regressions.
 seq0_seed12345_die_rolls = [
     2, 5, 5, 4, 1, 6, 4, 4, 2, 5, 2, 6, 6, 2, 3, 1, 2, 6, 2, 6]
 seq0_seed12345_uniforms = [
@@ -25,6 +26,20 @@ seq0_seed12345_uniforms = [
     float.fromhex('0x1.ea43f2f716334p-3'),
     float.fromhex('0x1.0be283f46182ap-2'),
 ]
+seq0_seed12345_choices = [
+    'HT', 'D2', 'CK', 'DJ', 'S7', 'C8', 'DJ', 'DT',
+    'HA', 'D4', 'HT', 'CT', 'C7'
+]
+
+
+# 99% values of the chi-squared statistic used in various
+# tests below, indexed by degrees of freedom. Values
+# calculated using scipy.stats.chi2(dof).ppf(0.99)
+chisq_99percentile = {
+    3: 11.344866730144371,
+    12: 26.21696730553585,
+    31: 52.19139483319192,
+}
 
 
 @contextlib.contextmanager
@@ -75,6 +90,15 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         uniforms = [gen.random() for _ in range(10)]
         for actual, expected in zip(uniforms, seq0_seed12345_uniforms):
             self.assertEqual(actual, expected)
+
+        gen = PCG_XSH_RR_V0(seed=12345, sequence=0)
+        suits = 'SHDC'
+        values = 'AKQJT98765432'
+        cards = [suit+value for suit in suits for value in values]
+
+        # Selection with repetition.
+        choices = [gen.choice(cards) for _ in range(13)]
+        self.assertEqual(choices, seq0_seed12345_choices)
 
     def test_sequence_default(self):
         gen1 = PCG_XSH_RR_V0(seed=12345, sequence=0)
@@ -170,23 +194,9 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
     def test_getrandbits(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
 
-        N = 10000
         k = 5
         samples = [gen.getrandbits(k) for _ in range(10000)]
-        self.assertLess(max(samples), 2**k)
-        self.assertGreaterEqual(min(samples), 0)
-
-        # Perform a chi-squared test for uniformity.
-        # pp = scipy.stats.chi2(31).ppf(0.99)
-        pp = 52.191394833191922
-        counts = collections.Counter(samples)
-        expected = float(N) / 2**k
-        cs = sum(
-            (counts[i] - expected)**2 / expected
-            for i in range(2**k)
-        )
-        # 1% chance of test failure.
-        self.assertLess(cs, pp)
+        self.check_uniformity(range(2**k), samples)
 
     def test_getrandbits_large(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
@@ -214,22 +224,9 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
 
         # Indirect test of our _randbelow override.
-        trials = 10000
         n = 13
-        # pp = scipy.stats.chi2(n-1).ppf(0.99)
-        pp = 26.216967305535849
-
-        samples = [gen.randrange(13) for _ in range(trials)]
-
-        counts = collections.Counter(samples)
-        expected = trials / n
-        cs = sum(
-            (counts[i] - expected)**2 / expected
-            for i in range(n)
-        )
-
-        # Should fail <1% of the time, on average.
-        self.assertLess(cs, pp)
+        samples = [gen.randrange(n) for _ in range(10000)]
+        self.check_uniformity(range(n), samples)
 
     def test_randrange_one(self):
         # Corner case.
@@ -281,6 +278,11 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             sample = gen.randrange(2**32)
             self.assertEqual(sample, samples[next_pos])
             current_pos = next_pos + 1
+
+    def test__randbelow(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        with self.assertRaises(ValueError):
+            gen._randbelow(0)
 
     def test_randrange_float_arguments(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
@@ -346,6 +348,19 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         with self.assertRaises(ValueError):
             gen.randrange(47, 47, 1)
 
+    def test_choice(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        with self.assertRaises(IndexError):
+            gen.choice([])
+
+        nsamples = 1000
+        seq = "ABCD"
+        choices = [
+            gen.choice(seq) for _ in range(nsamples)
+        ]
+        self.check_uniformity(seq, choices)
+
     def test_count_samples_generated(self):
         # This is really a test for our count_samples_generated helper
         # rather than for the PRNG.
@@ -360,3 +375,18 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
 
         [gen.randrange(27) for _ in range(13)]
         self.assertEqual(wordgen.call_count, 41)
+
+    def check_uniformity(self, population, sample):
+        """
+        Check uniformity via a chi-squared test with p-value 0.99.
+
+        Requires that there's an entry for len(population) - 1
+        in the chisq_99percentile dictionary.
+        """
+        counts = collections.Counter(sample)
+        expected = len(sample) / len(population)
+        stat = sum(
+            (counts[i] - expected)**2 / expected
+            for i in population
+        )
+        self.assertLess(stat, chisq_99percentile[len(population) - 1])

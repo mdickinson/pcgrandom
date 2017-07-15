@@ -24,7 +24,7 @@ _KNUTH_MMIX_LCG_INCREMENT = 1442695040888963407
 
 def _rotate32(v, r):
     """
-    An unsigned 32-bit bitwise 'clockwise' rotation of r bits on v.
+    An unsigned 32-bit bitwise "clockwise" rotation of r bits on v.
 
     If v has more than 32 bits, only the least significant 32 bits
     are used.
@@ -53,7 +53,7 @@ class PCG_XSH_RR_V0(_random.Random):
     PCG-XSH-RR, sitting on a 64-bit LCG from Knuth.
     """
 
-    VERSION = 'pcgrand.PCG_XSH_RR_V0'
+    VERSION = "pcgrand.PCG_XSH_RR_V0"
 
     def __init__(self, seed=None, sequence=0):
         multiplier = _KNUTH_MMIX_LCG_MULTIPLIER
@@ -191,12 +191,25 @@ class PCG_XSH_RR_V0(_random.Random):
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
         # Invariant: x is uniformly distributed in range(h).
+        if n <= 0:
+            raise ValueError("n must be positive")
+
         x, h = 0, 1
         while True:
             q, r = divmod(h, n)
             if r <= x:
                 return (x - r) // q
             x, h = x << 32 | self._next_word(), r << 32
+
+    # sequence methods
+
+    def choice(self, seq):
+        """Choose a random element from a non-empty sequence."""
+        try:
+            i = self._randbelow(len(seq))
+        except ValueError:
+            raise IndexError("Cannot choose from an empty sequence")
+        return seq[i]
 
     # Private helper functions.
 
