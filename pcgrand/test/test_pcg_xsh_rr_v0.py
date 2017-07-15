@@ -27,7 +27,6 @@ seq0_seed12345_uniforms = [
 ]
 
 
-
 @contextlib.contextmanager
 def count_samples_generated(gen):
     """
@@ -131,7 +130,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=27)
 
         # Generate some values.
-        samples1 = [gen.random() for _ in range(10)]
+        [gen.random() for _ in range(10)]
 
         # Save the state, generate some more.
         state = gen.getstate()
@@ -254,21 +253,6 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
                 gen.randrange(2**32)
                 self.assertEqual(wordgen.call_count, index+1)
 
-    def test_count_samples_generated(self):
-        # This is really a test for our count_samples_generated helper
-        # rather than for the PRNG.
-        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
-
-        samples = [gen.randrange(13) for _ in range(14)]
-        with count_samples_generated(gen) as wordgen:
-            samples = [gen.randrange(27) for _ in range(21)]
-            self.assertEqual(wordgen.call_count, 21)
-            samples = [gen.random() for _ in range(10)]
-            self.assertEqual(wordgen.call_count, 41)
-
-        samples = [gen.randrange(27) for _ in range(13)]
-        self.assertEqual(wordgen.call_count, 41)
-
     def test_jumpahead(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
         # Generate samples, each sample consuming exactly one word
@@ -297,3 +281,18 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             sample = gen.randrange(2**32)
             self.assertEqual(sample, samples[next_pos])
             current_pos = next_pos + 1
+
+    def test_count_samples_generated(self):
+        # This is really a test for our count_samples_generated helper
+        # rather than for the PRNG.
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        [gen.randrange(13) for _ in range(14)]
+        with count_samples_generated(gen) as wordgen:
+            [gen.randrange(27) for _ in range(21)]
+            self.assertEqual(wordgen.call_count, 21)
+            [gen.random() for _ in range(10)]
+            self.assertEqual(wordgen.call_count, 41)
+
+        [gen.randrange(27) for _ in range(13)]
+        self.assertEqual(wordgen.call_count, 41)
