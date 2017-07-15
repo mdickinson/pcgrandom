@@ -164,5 +164,5 @@ class PCG_XSH_RR_V0(_random.Random):
         output = _rotate32(output_word, output_shift)
         new_state = state * self._multiplier + self._increment
         new_state &= _UINT64_MASK
-        self._state = new_state & _UINT64_MASK
+        self._state = new_state
         return output
