@@ -87,16 +87,6 @@ class PCG_XSH_RR_V0(_random.Random):
         b = self._next_word() >> 6
         return (a*67108864.0+b)/9007199254740992.0
 
-    def _randbelow(self, n):
-        """Return a random integer in range(n)."""
-        # Invariant: x is uniformly distributed in range(h).
-        x, h = 0, 1
-        while True:
-            q, r = divmod(h, n)
-            if r <= x:
-                return (x - r) // q
-            x, h = x << 32 | self._next_word(), r << 32
-
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
         parameters = self._multiplier, self._increment
@@ -141,6 +131,7 @@ class PCG_XSH_RR_V0(_random.Random):
         """Jump ahead or back in the sequence of random numbers."""
 
         # Reduce n modulo the period of the sequence.
+        n = _operator.index(n)
         n &= _UINT64_MASK
         a, c = self._multiplier, self._increment
 
@@ -196,6 +187,16 @@ class PCG_XSH_RR_V0(_random.Random):
                     istart, istop, istep))
 
         return istart + istep * self._randbelow(n)
+
+    def _randbelow(self, n):
+        """Return a random integer in range(n)."""
+        # Invariant: x is uniformly distributed in range(h).
+        x, h = 0, 1
+        while True:
+            q, r = divmod(h, n)
+            if r <= x:
+                return (x - r) // q
+            x, h = x << 32 | self._next_word(), r << 32
 
     # Private helper functions.
 
