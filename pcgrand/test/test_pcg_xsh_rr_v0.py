@@ -282,6 +282,70 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             self.assertEqual(sample, samples[next_pos])
             current_pos = next_pos + 1
 
+    def test_randrange_float_arguments(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        with self.assertRaises(TypeError):
+            gen.randrange(5.0)
+        with self.assertRaises(TypeError):
+            gen.randrange(2.0, 7)
+        with self.assertRaises(TypeError):
+            gen.randrange(2, 7.0)
+        with self.assertRaises(TypeError):
+            gen.randrange(2, 7, 1.0)
+        with self.assertRaises(TypeError):
+            gen.randrange(2, 7, 2.0)
+
+    def test_randrange_start_only(self):
+        # See http://bugs.python.org/issue9379 for related discussion.
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        samples = [gen.randrange(23) for _ in range(1000)]
+        # Chance of getting only 22 of the possible 23 outcomes is < 1.2e-18.
+        self.assertEqual(set(samples), set(range(23)))
+
+        with self.assertRaises(ValueError):
+            gen.randrange(0)
+        with self.assertRaises(ValueError):
+            gen.randrange(-5)
+
+    def test_randrange_start_and_stop(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        samples = [gen.randrange(-10, 13) for _ in range(1000)]
+        self.assertEqual(set(samples), set(range(-10, 13)))
+
+        with self.assertRaises(ValueError):
+            gen.randrange(20, 20)
+        with self.assertRaises(ValueError):
+            gen.randrange(21, 20)
+
+    def test_randrange_start_stop_and_step(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        test_ranges = [
+            (16, 37, 5),
+            (5, 35, 5),
+            (4, 35, 5),
+            (35, 5, -5),
+            (36, 5, -5),
+        ]
+
+        for test_range in test_ranges:
+            samples = [gen.randrange(*test_range) for _ in range(1000)]
+            self.assertEqual(set(samples), set(range(*test_range)))
+
+        with self.assertRaises(ValueError):
+            gen.randrange(0, 20, 0)
+        with self.assertRaises(ValueError):
+            gen.randrange(0, -20, 0)
+        with self.assertRaises(ValueError):
+            gen.randrange(0, 5, -1)
+        with self.assertRaises(ValueError):
+            gen.randrange(0, -5, 1)
+        with self.assertRaises(ValueError):
+            gen.randrange(22, 22, -1)
+        with self.assertRaises(ValueError):
+            gen.randrange(47, 47, 1)
+
     def test_count_samples_generated(self):
         # This is really a test for our count_samples_generated helper
         # rather than for the PRNG.

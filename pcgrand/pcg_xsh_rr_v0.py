@@ -1,4 +1,3 @@
-# XXX Make compatible with Python 2.
 # XXX Make sure states can be transferred across Python versions (including
 #     pickled states); how do we deal with the str / bytes mismatch?
 # XXX fromstate constructor method? Or function, so that it can select
@@ -9,6 +8,8 @@
 import operator as _operator
 import os as _os
 import random as _random
+
+from future.builtins import int as _int
 
 _UINT32_MASK = 2**32 - 1
 _UINT64_MASK = 2**64 - 1
@@ -70,7 +71,7 @@ class PCG_XSH_RR_V0(_random.Random):
         # harder to guarantee reproducibility in the case that the hash
         # changes.  See also http://bugs.python.org/issue27706.
         if seed is None:
-            seed = int.from_bytes(_os.urandom(8), byteorder='little')
+            seed = _int.from_bytes(_os.urandom(8), byteorder='little')
         else:
             seed = _operator.index(seed)
 
@@ -152,6 +153,48 @@ class PCG_XSH_RR_V0(_random.Random):
                 an, cn = a * an & _UINT64_MASK, a * cn + c & _UINT64_MASK
 
         self._state = (self._state * an + cn) & _UINT64_MASK
+
+    def randrange(self, start, stop=None, step=None):
+        """Choose a random item from range(start, stop[, step]).
+
+        """
+        # Reimplemented from the base class to ensure reproducibility
+        # across Python versions. The code below is adapted from that
+        # in Python 3.6.
+
+        # XXX Compatibility: randrange accepts numpy ints.
+        # XXX Compatibility: randrange does not accept floats;
+        #     an attempt to pass a float (integral or not) raises
+        #     TypeError. (For Random, it raises ValueError for non-integral
+        #     floats and is accepted for integral floats.) Similarly,
+        #     Decimal objects aren't supported.
+
+        istart = _operator.index(start)
+        if stop is None:
+            if istart > 0:
+                return self._randbelow(istart)
+            else:
+                raise ValueError("empty range for randrange()")
+
+        istop = _operator.index(stop)
+        width = istop - istart
+        if step is None:
+            if width > 0:
+                return istart + self._randbelow(width)
+            else:
+                raise ValueError(
+                    "empty range for randrange() (%d,%d, %d)"
+                    % (istart, istop, width)
+                )
+
+        istep = _operator.index(step)
+        if istep == 0:
+            raise ValueError("zero step for randrange()")
+        n = -(-width // istep)
+        if n <= 0:
+            raise ValueError("empty range for randrange()")
+
+        return istart + istep * self._randbelow(n)
 
     # Private helper functions.
 
