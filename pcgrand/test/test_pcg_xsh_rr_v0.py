@@ -283,6 +283,8 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
         with self.assertRaises(ValueError):
             gen._randbelow(0)
+        with self.assertRaises(ValueError):
+            gen._randbelow(-5)
 
     def test_randrange_float_arguments(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)

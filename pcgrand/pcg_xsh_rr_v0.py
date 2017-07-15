@@ -190,10 +190,10 @@ class PCG_XSH_RR_V0(_random.Random):
 
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
-        # Invariant: x is uniformly distributed in range(h).
         if n <= 0:
             raise ValueError("n must be positive")
 
+        # Invariant: x is uniformly distributed in range(h).
         x, h = 0, 1
         while True:
             q, r = divmod(h, n)
