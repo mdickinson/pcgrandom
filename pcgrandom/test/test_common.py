@@ -1,6 +1,7 @@
 """
 Tests common to all generators.
 """
+from __future__ import division
 
 import collections
 import itertools
@@ -19,6 +20,76 @@ chisq_99percentile = {
 
 
 class TestCommon(object):
+    def test_save_and_restore_state(self):
+        # Generate some values.
+        [self.gen.random() for _ in range(10)]
+
+        # Save the state, generate some more.
+        state = self.gen.getstate()
+        samples2 = [self.gen.random() for _ in range(10)]
+
+        # Restore the state, check we get the same samples.
+        self.gen.setstate(state)
+        samples3 = [self.gen.random() for _ in range(10)]
+        self.assertEqual(samples2, samples3)
+
+    def test_jumpahead(self):
+        # Generate samples, each sample consuming exactly one output
+        # from the core generator.
+        original_state = self.gen.getstate()
+        samples = [self.gen._next_output() for _ in range(1000)]
+
+        # Rewind, check we can produce the exact same samples.
+        self.gen.jumpahead(-1000)
+        same_again = [self.gen._next_output() for _ in range(1000)]
+        self.assertEqual(samples, same_again)
+
+        # Now jump around randomly within the collection of samples,
+        # and check we can reproduce them.
+        positions = [self.gen.randrange(1000) for _ in range(1000)]
+
+        self.gen.setstate(original_state)
+        current_pos = 0
+        for next_pos in positions:
+            self.gen.jumpahead(next_pos - current_pos)
+            sample = self.gen._next_output()
+            self.assertEqual(sample, samples[next_pos])
+            current_pos = next_pos + 1
+
+    def test_jumpahead_zero(self):
+        # Corner case: jumpahead(0) should work.
+        state = self.gen.getstate()
+        self.gen.jumpahead(0)
+        self.assertEqual(self.gen.getstate(), state)
+
+    def test_state_preserves_gauss(self):
+        # Test a state with gauss_next = None
+        state = self.gen.getstate()
+        samples1 = [self.gen.gauss(0.0, 1.0) for _ in range(5)]
+        self.gen.setstate(state)
+        samples2 = [self.gen.gauss(0.0, 1.0) for _ in range(5)]
+        self.assertEqual(samples1, samples2)
+
+        # ... and a state with gauss_next non-None.
+        state = self.gen.getstate()
+        samples1 = [self.gen.gauss(0.0, 1.0) for _ in range(5)]
+        self.gen.setstate(state)
+        samples2 = [self.gen.gauss(0.0, 1.0) for _ in range(5)]
+        self.assertEqual(samples1, samples2)
+
+    def test_seed_resets_gauss_state(self):
+        self.gen.seed(2143)
+        self.assertIsNone(self.gen.gauss_next)
+        x1 = self.gen.gauss(0.0, 1.0)
+        self.assertIsNotNone(self.gen.gauss_next)
+
+        self.gen.seed(2143)
+        self.assertIsNone(self.gen.gauss_next)
+        x2 = self.gen.gauss(0.0, 1.0)
+        self.assertIsNotNone(self.gen.gauss_next)
+
+        self.assertEqual(x1, x2)
+
     def test_getrandbits(self):
         k = 5
         samples = [self.gen.getrandbits(k) for _ in range(10000)]
@@ -264,6 +335,13 @@ class TestCommon(object):
             self.gen.choices(range(3), weights=[0.0, 0.0, 0.0])
         with self.assertRaises(ValueError):
             self.gen.choices(range(3), cum_weights=[0.0, 0.0, 0.0])
+
+    def test_random_uniformity(self):
+        sample = [self.gen.random() for _ in range(10000)]
+
+        # Bin and do a chi-squared test.
+        binned_sample = [int(13*x) for x in sample]
+        self.check_uniform(range(13), binned_sample)
 
     def check_uniform(self, population, sample):
         """

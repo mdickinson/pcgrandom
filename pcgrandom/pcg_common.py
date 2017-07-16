@@ -79,7 +79,7 @@ class PCGCommon(_random.Random):
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0
         for _ in _range(numwords):
-            acc = acc << output_bits | self._next_word()
+            acc = acc << output_bits | self._next_output()
         return acc >> excess_bits
 
     def random(self):
@@ -95,7 +95,7 @@ class PCGCommon(_random.Random):
             q, r = divmod(h, n)
             if r <= x:
                 return (x - r) // q
-            x, h = x << output_bits | self._next_word(), r << output_bits
+            x, h = x << output_bits | self._next_output(), r << output_bits
 
     def randrange(self, start, stop=None, step=None):
         """Choose a random item from range(start, stop[, step]).
@@ -148,7 +148,7 @@ class PCGCommon(_random.Random):
             & self._state_mask
         )
 
-    def _next_word(self):
+    def _next_output(self):
         """Return next output; advance the underlying LCG.
         """
         output = self._get_output()
@@ -166,9 +166,9 @@ class PCGCommon(_random.Random):
         seed &= self._state_mask
 
         self._state = 0
-        self._next_word()
+        self._next_output()
         self._state = (self._state + seed) & self._state_mask
-        self._next_word()
+        self._next_output()
 
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""

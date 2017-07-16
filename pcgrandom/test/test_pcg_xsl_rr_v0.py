@@ -3,7 +3,6 @@ Tests for the PCG_XSL_RR_V0 generator.
 """
 from __future__ import division
 
-import contextlib
 import math
 import unittest
 
@@ -40,39 +39,6 @@ seq0_seed12345_shuffle = [
 ]
 
 
-# 99% values of the chi-squared statistic used in various
-# tests below, indexed by degrees of freedom. Values
-# calculated using scipy.stats.chi2(dof).ppf(0.99)
-chisq_99percentile = {
-    3: 11.344866730144371,
-    4: 13.276704135987622,
-    12: 26.21696730553585,
-    23: 41.63839811885848,
-    31: 52.19139483319192,
-}
-
-
-@contextlib.contextmanager
-def count_samples_generated(gen):
-    """
-    Keep track of number of samples produced by the given generator.
-    """
-    word_generator = gen._next_word
-
-    def replacement_word_generator():
-        replacement_word_generator.call_count += 1
-        return word_generator()
-
-    replacement_word_generator.call_count = 0
-
-    # Shadow the class method with a local definition.
-    gen._next_word = replacement_word_generator
-    try:
-        yield replacement_word_generator
-    finally:
-        del gen._next_word
-
-
 class Test_PCG_XSL_RR_V0(TestCommon, unittest.TestCase):
 
     def setUp(self):
@@ -88,20 +54,6 @@ class Test_PCG_XSL_RR_V0(TestCommon, unittest.TestCase):
         # Possible in theory for these two samples to be identical; vanishingly
         # unlikely in practice.
         self.assertNotEqual(sample1, sample2)
-
-    def test_seed_resets_gauss_state(self):
-        gen = PCG_XSL_RR_V0()
-
-        gen.seed(2143)
-        x1 = gen.random()
-        y1 = gen.gauss(0.0, 1.0)
-
-        gen.seed(2143)
-        x2 = gen.random()
-        y2 = gen.gauss(0.0, 1.0)
-
-        self.assertEqual(x1, x2)
-        self.assertEqual(y1, y2)
 
     def test_reproducibility(self):
         gen = PCG_XSL_RR_V0(seed=12345, sequence=0)
@@ -186,21 +138,6 @@ class Test_PCG_XSL_RR_V0(TestCommon, unittest.TestCase):
         self.assertEqual(sample2_1, sample2_2)
         self.assertEqual(sample2_1, sample2_3)
 
-    def test_save_and_restore_state(self):
-        gen = PCG_XSL_RR_V0(seed=15206, sequence=27)
-
-        # Generate some values.
-        [gen.random() for _ in range(10)]
-
-        # Save the state, generate some more.
-        state = gen.getstate()
-        samples2 = [gen.random() for _ in range(10)]
-
-        # Restore the state, check we get the same samples.
-        gen.setstate(state)
-        samples3 = [gen.random() for _ in range(10)]
-        self.assertEqual(samples2, samples3)
-
     def test_restore_state_from_different_generator(self):
         gen = PCG_XSL_RR_V0(seed=15206, sequence=27)
         state = gen.getstate()
@@ -209,75 +146,3 @@ class Test_PCG_XSL_RR_V0(TestCommon, unittest.TestCase):
         bad_state = (bad_version,) + state[1:]
         with self.assertRaises(ValueError):
             gen.setstate(bad_state)
-
-    def test_state_preserves_gauss(self):
-        gen = PCG_XSL_RR_V0(seed=15206, sequence=27)
-
-        # Test a state with gauss_next = None
-        state = gen.getstate()
-        samples1 = [gen.gauss(0.0, 1.0) for _ in range(5)]
-        gen.setstate(state)
-        samples2 = [gen.gauss(0.0, 1.0) for _ in range(5)]
-        self.assertEqual(samples1, samples2)
-
-        # ... and a state with gauss_next non-None.
-        state = gen.getstate()
-        samples1 = [gen.gauss(0.0, 1.0) for _ in range(5)]
-        gen.setstate(state)
-        samples2 = [gen.gauss(0.0, 1.0) for _ in range(5)]
-        self.assertEqual(samples1, samples2)
-
-    def test_randrange_of_wordsize(self):
-        # Using randrange(2**64) should consume exactly one
-        # sample each time.
-        gen = PCG_XSL_RR_V0(seed=15206, sequence=1729)
-
-        with count_samples_generated(gen) as wordgen:
-            for index in range(10000):
-                self.assertEqual(wordgen.call_count, index)
-                gen.randrange(2**64)
-                self.assertEqual(wordgen.call_count, index+1)
-
-    def test_jumpahead(self):
-        gen = PCG_XSL_RR_V0(seed=15206, sequence=1729)
-        # Generate samples, each sample consuming exactly one word
-        # from the core generator.
-        samples = [gen.randrange(2**64) for _ in range(1000)]
-
-        # Rewind, check we can produce the exact same samples.
-        gen.jumpahead(-1000)
-        same_again = [gen.randrange(2**64) for _ in range(1000)]
-        self.assertEqual(samples, same_again)
-
-        # Corner case: jumpahead(0) should work.
-        state_before = gen.getstate()
-        gen.jumpahead(0)
-        state_after = gen.getstate()
-        self.assertEqual(state_before, state_after)
-
-        # Now jump around randomly within the collection of samples. Use a
-        # separate generator for the positions to jump to.
-        posgen = PCG_XSL_RR_V0(seed=19733, sequence=22)
-
-        current_pos = 1000
-        for _ in range(100):
-            next_pos = posgen.randrange(1000)
-            gen.jumpahead(next_pos - current_pos)
-            sample = gen.randrange(2**64)
-            self.assertEqual(sample, samples[next_pos])
-            current_pos = next_pos + 1
-
-    def test_count_samples_generated(self):
-        # This is really a test for our count_samples_generated helper
-        # rather than for the PRNG.
-        gen = PCG_XSL_RR_V0(seed=15206, sequence=1729)
-
-        [gen.randrange(13) for _ in range(14)]
-        with count_samples_generated(gen) as wordgen:
-            [gen.randrange(27) for _ in range(21)]
-            self.assertEqual(wordgen.call_count, 21)
-            [gen.random() for _ in range(10)]
-            self.assertEqual(wordgen.call_count, 31)
-
-        [gen.randrange(27) for _ in range(13)]
-        self.assertEqual(wordgen.call_count, 31)
