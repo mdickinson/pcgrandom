@@ -46,6 +46,7 @@ seq0_seed12345_shuffle = [
 # calculated using scipy.stats.chi2(dof).ppf(0.99)
 chisq_99percentile = {
     3: 11.344866730144371,
+    4: 13.276704135987622,
     12: 26.21696730553585,
     23: 41.63839811885848,
     31: 52.19139483319192,
@@ -215,7 +216,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
 
         k = 5
         samples = [gen.getrandbits(k) for _ in range(10000)]
-        self.check_uniformity(range(2**k), samples)
+        self.check_uniform(range(2**k), samples)
 
     def test_getrandbits_large(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
@@ -245,7 +246,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         # Indirect test of our _randbelow override.
         n = 13
         samples = [gen.randrange(n) for _ in range(10000)]
-        self.check_uniformity(range(n), samples)
+        self.check_uniform(range(n), samples)
 
     def test_randrange_one(self):
         # Corner case.
@@ -373,14 +374,14 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         choices = [
             gen.choice(seq) for _ in range(nsamples)
         ]
-        self.check_uniformity(seq, choices)
+        self.check_uniform(seq, choices)
 
     def test_sample(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
 
         samples = [tuple(gen.sample(range(4), 3)) for _ in range(10000)]
         population = list(itertools.permutations(range(4), 3))
-        self.check_uniformity(population, samples)
+        self.check_uniform(population, samples)
 
     def test_sample_set(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
@@ -420,7 +421,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             gen.shuffle(population)
             samples.append(tuple(population))
 
-        self.check_uniformity(
+        self.check_uniform(
             list(itertools.permutations(range(4))),
             samples,
         )
@@ -435,6 +436,61 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         population = [13]
         gen.shuffle(population)
         self.assertEqual(population, [13])
+
+    def test_choices(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        population = list(range(5))
+
+        sample = gen.choices(population, k=10000)
+        self.check_uniform(population, sample)
+
+        weights = [2, 3, 0, 1, 4]
+        sample = gen.choices(population, weights=weights, k=10000)
+        self.check_goodness_of_fit(dict(zip(population, weights)), sample)
+
+        cum_weights = [2, 5, 5, 6, 10]
+        sample = gen.choices(population, cum_weights=cum_weights, k=10000)
+        self.check_goodness_of_fit(dict(zip(population, weights)), sample)
+
+    def test_choices_error_conditions(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        # Can't specify both weights and cum_weights.
+        with self.assertRaises(TypeError):
+            gen.choices(range(3), weights=[1, 2, 3], cum_weights=[1, 3, 6])
+
+        # Two errors here: empty population, and both weights and cum_weights
+        # specified. The TypeError for the bad signature should win.
+        with self.assertRaises(TypeError):
+            gen.choices([], weights=[1, 2, 3], cum_weights=[1, 3, 6])
+
+        # Empty population: IndexError to match random.choice. We should get an
+        # exception even in the corner case that zero samples are requested.
+        with self.assertRaises(IndexError):
+            gen.choices([], weights=[])
+        with self.assertRaises(IndexError):
+            gen.choices([], cum_weights=[])
+        with self.assertRaises(IndexError):
+            gen.choices([])
+        with self.assertRaises(IndexError):
+            gen.choices([], weights=[], k=0)
+        with self.assertRaises(IndexError):
+            gen.choices([], cum_weights=[], k=0)
+        with self.assertRaises(IndexError):
+            gen.choices([], k=0)
+
+        # Number of weights doesn't match population.
+        with self.assertRaises(ValueError):
+            gen.choices(range(3), weights=[1, 2])
+        with self.assertRaises(ValueError):
+            gen.choices(range(3), cum_weights=[1, 2])
+
+        # Total weight is zero.
+        with self.assertRaises(ValueError):
+            gen.choices(range(3), weights=[0.0, 0.0, 0.0])
+        with self.assertRaises(ValueError):
+            gen.choices(range(3), cum_weights=[0.0, 0.0, 0.0])
 
     def test_count_samples_generated(self):
         # This is really a test for our count_samples_generated helper
@@ -451,17 +507,46 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         [gen.randrange(27) for _ in range(13)]
         self.assertEqual(wordgen.call_count, 41)
 
-    def check_uniformity(self, population, sample):
+    def check_uniform(self, population, sample):
         """
         Check uniformity via a chi-squared test with p-value 0.99.
 
         Requires that there's an entry for len(population) - 1
         in the chisq_99percentile dictionary.
+
+        Parameters
+        ----------
+        population : sequence
+            The population that the samples are drawn from.
+        sample : sequence
+            The generated sample.
+        """
+        weights = {i: 1 for i in population}
+        self.check_goodness_of_fit(weights, sample)
+
+    def check_goodness_of_fit(self, weights, sample):
+        """
+        Perform a chi-squared goodness of fit test.
+
+        Requires that there's an entry for len(expected) - 1
+        in the chisq_99percentile dictionary.
+
+        sample : the sample to be tested
+        weights : mapping from members of the population to their
+            expected weights. The weights need not be normalised.
         """
         counts = collections.Counter(sample)
-        expected = len(sample) / len(population)
+        # factor to convert weights to expected frequencies for this sample
+        scale = len(sample) / sum(weights.values())
+        expected = {i: w * scale for i, w in weights.items() if w}
+
+        # Check that we don't have any extraneous objects in our sample.  This
+        # also acts as a check that elements with zero weight haven't been
+        # generated.
+        self.assertLessEqual(set(counts), set(expected))
+
         stat = sum(
-            (counts[i] - expected)**2 / expected
-            for i in population
+            (counts[i] - expected[i])**2 / expected[i]
+            for i in expected
         )
-        self.assertLess(stat, chisq_99percentile[len(population) - 1])
+        self.assertLess(stat, chisq_99percentile[len(expected)-1])

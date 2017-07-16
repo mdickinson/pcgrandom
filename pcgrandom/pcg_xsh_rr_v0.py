@@ -3,19 +3,24 @@
 # XXX fromstate constructor method? Or function, so that it can select
 #     the appropriate class to use.
 # XXX References: O'Neill, L'Ecuyer, Knuth MMIX.
-# XXX Think harder about reproducibility; document it.
+# XXX Document reproducibility.
+# XXX Document compatibility.
 # XXX Support Python 2.6? 3.3?
-# XXX Override choices for reproducibility.
 # XXX Refactor tests: setUp to create generator (then tests that are common
 #     to all generators can be moved to a mixin).
 # XXX Fix use of __getstate__ and __reduce__.
+# XXX Style: make exceptions consistent (capital letter, full stop).
+# XXX Decide whether we really need the future dependency.
 
+from __future__ import division
+
+import bisect as _bisect
 import collections as _collections
 import operator as _operator
 import os as _os
 import random as _random
 
-from builtins import int as _int
+from builtins import int as _int, range as _range
 
 _UINT32_MASK = 2**32 - 1
 _UINT64_MASK = 2**64 - 1
@@ -128,7 +133,7 @@ class PCG_XSH_RR_V0(_random.Random):
         # k = 32 * numwords - excess_bits, 0 <= excess_bits < 32
         numwords, excess_bits = -(-k // 32), -k % 32
         acc = 0
-        for _ in range(numwords):
+        for _ in _range(numwords):
             acc = acc << 32 | self._next_word()
         return acc >> excess_bits
 
@@ -218,7 +223,7 @@ class PCG_XSH_RR_V0(_random.Random):
         # second 'random' argument.
 
         n = len(x)
-        for i in reversed(range(n)):
+        for i in reversed(_range(n)):
             j = i + self._randbelow(n - i)
             if j > i:
                 x[i], x[j] = x[j], x[i]
@@ -256,7 +261,7 @@ class PCG_XSH_RR_V0(_random.Random):
         # python-list dated May 28th 2010, entitled "A Friday Python
         # Programming Pearl: random sampling".
         d = {}
-        for i in reversed(range(k)):
+        for i in reversed(_range(k)):
             j = i + self._randbelow(n - i)
             if j in d:
                 d[i] = d[j]
@@ -266,6 +271,54 @@ class PCG_XSH_RR_V0(_random.Random):
         for j, i in d.items():
             result[i] = population[j]
         return result
+
+    def choices(self, population, weights=None, cum_weights=None, k=1):
+        """Return k-sized list of population elements chosen with replacement.
+
+        If the relative weights or cumulative weights are not specified,
+        the selections are made with equal probability.
+
+        """
+        # XXX Compatibility note: cum_weights can be passed by position, but
+        # please don't. This is only for Python 2 support.
+        # XXX Compatibility note: if the sum of the weights is zero, a
+        # ValueError is raised rather than an IndexError.
+        # XXX Compatibility note: an IndexError is raised for an empty
+        # population, even if k=0.
+
+        # Code modified to remove the possibility of IndexError due to double
+        # rounding or subnormal weights. See http://bugs.python.org/issue24567
+
+        if cum_weights is None:
+            if weights is None:
+                if len(population) == 0:
+                    raise IndexError("Cannot choose from an empty population")
+                return [self.choice(population) for _ in _range(k)]
+            cum_weights, acc = [], 0
+            for weight in weights:
+                acc += weight
+                cum_weights.append(acc)
+        elif weights is not None:
+            raise TypeError(
+                "Cannot specify both weights and cumulative weights")
+
+        if len(population) == 0:
+            raise IndexError("Cannot choose from an empty population")
+        if len(cum_weights) != len(population):
+            raise ValueError(
+                "The number of weights does not match the population")
+        if cum_weights[-1] == 0:
+            raise ValueError(
+                "The total weight must be strictly positive.")
+
+        bisect = _bisect.bisect
+        total = cum_weights[-1]
+        bisectors = cum_weights[:-1]
+
+        return [
+            population[bisect(bisectors, self.random() * total)]
+            for _ in range(k)
+        ]
 
     # Private helper functions.
 
