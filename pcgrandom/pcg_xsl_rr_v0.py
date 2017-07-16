@@ -1,12 +1,7 @@
-from __future__ import division
-
-import operator as _operator
-
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
 
 _UINT64_MASK = 2**64 - 1
-_UINT128_MASK = 2**128 - 1
 
 # Constant from Table 4 of "Tables of linear congruential generators of
 # different sizes and good lattice stucture", Pierre L'Ecuyer, Mathematics of
@@ -49,22 +44,13 @@ class PCG_XSL_RR_V0(_PCGCommon):
 
     VERSION = "pcgrandom.PCG_XSL_RR_V0"
 
-    _state_mask = _UINT128_MASK
-
     _state_bits = 128
 
     _output_bits = 64
 
-    def __init__(self, seed=None, sequence=0):
-        multiplier = _LECUYER_MULTIPLIER
-        sequence = _operator.index(sequence) & _UINT128_MASK
-        increment = (2 * sequence + _128BIT_INCREMENT) & _UINT128_MASK
+    _multiplier = _LECUYER_MULTIPLIER
 
-        self._multiplier = multiplier
-        self._increment = increment
-        self.seed(seed)
-
-    # Private helper functions.
+    _base_increment = _128BIT_INCREMENT
 
     def _get_output(self):
         """Compute output from current state."""

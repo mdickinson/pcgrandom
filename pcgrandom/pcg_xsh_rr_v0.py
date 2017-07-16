@@ -12,21 +12,10 @@
 # XXX Style: make exceptions consistent (capital letter, full stop).
 # XXX Decide whether we really need the future dependency.
 
-from __future__ import division
-
-import operator as _operator
-
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
 
 _UINT32_MASK = 2**32 - 1
-_UINT64_MASK = 2**64 - 1
-
-# Constants reportedly used by Knuth for MMIX's LCG.  These values are given on
-# the Wikipedia page for Linear Congruential Generators, and can be found in
-# various other references online, but I was unable to find the primary source.
-_KNUTH_MMIX_LCG_MULTIPLIER = 6364136223846793005
-_KNUTH_MMIX_LCG_INCREMENT = 1442695040888963407
 
 
 def _rotate32(v, r):
@@ -62,22 +51,15 @@ class PCG_XSH_RR_V0(_PCGCommon):
 
     VERSION = "pcgrandom.PCG_XSH_RR_V0"
 
-    _state_mask = _UINT64_MASK
-
     _state_bits = 64
 
     _output_bits = 32
 
-    def __init__(self, seed=None, sequence=0):
-        multiplier = _KNUTH_MMIX_LCG_MULTIPLIER
-        sequence = _operator.index(sequence) & _UINT64_MASK
-        increment = (2 * sequence + _KNUTH_MMIX_LCG_INCREMENT) & _UINT64_MASK
+    # Multiplier reportedly used by Knuth for the MMIX LCG.
+    _multiplier = 6364136223846793005
 
-        self._multiplier = multiplier
-        self._increment = increment
-        self.seed(seed)
-
-    # Private helper functions.
+    # Increment reportedly used by Knuth for the MMIX LCG.
+    _base_increment = 1442695040888963407
 
     def _get_output(self):
         """Compute output from current state."""

@@ -16,6 +16,14 @@ class PCGCommon(_random.Random):
     """
     Common base class for the PCG random generators.
     """
+    def __init__(self, seed=None, sequence=0):
+        self._state_mask = ~(-1 << self._state_bits)
+        sequence = _operator.index(sequence) & self._state_mask
+        self._increment = (
+            2 * sequence + self._base_increment
+            & self._state_mask
+        )
+        self.seed(seed)
 
     def seed(self, seed=None):
         """Initialize internal state from hashable object.
