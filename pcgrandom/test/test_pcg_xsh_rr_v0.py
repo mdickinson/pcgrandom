@@ -5,6 +5,7 @@ from __future__ import division
 
 import collections
 import contextlib
+import itertools
 import math
 import unittest
 
@@ -28,7 +29,11 @@ seq0_seed12345_uniforms = [
 ]
 seq0_seed12345_choices = [
     'HT', 'D2', 'CK', 'DJ', 'S7', 'C8', 'DJ', 'DT',
-    'HA', 'D4', 'HT', 'CT', 'C7'
+    'HA', 'D4', 'HT', 'CT', 'C7',
+]
+seq0_seed12345_sample = [
+    'HT', 'C3', 'C8', 'DA', 'CA', 'D6', 'C6', 'H9',
+    'SK', 'H8', 'HJ', 'H2', 'H6',
 ]
 
 
@@ -38,6 +43,7 @@ seq0_seed12345_choices = [
 chisq_99percentile = {
     3: 11.344866730144371,
     12: 26.21696730553585,
+    23: 41.63839811885848,
     31: 52.19139483319192,
 }
 
@@ -99,6 +105,10 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         # Selection with repetition.
         choices = [gen.choice(cards) for _ in range(13)]
         self.assertEqual(choices, seq0_seed12345_choices)
+
+        # Sampling
+        sample = gen.sample(cards, 13)
+        self.assertEqual(sample, seq0_seed12345_sample)
 
     def test_sequence_default(self):
         gen1 = PCG_XSH_RR_V0(seed=12345, sequence=0)
@@ -362,6 +372,35 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             gen.choice(seq) for _ in range(nsamples)
         ]
         self.check_uniformity(seq, choices)
+
+    def test_sample(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        samples = [tuple(gen.sample(range(4), 3)) for _ in range(10000)]
+        population = list(itertools.permutations(range(4), 3))
+        self.check_uniformity(population, samples)
+
+    def test_sample_set(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        s = set('ABCDEFG')
+        sample = gen.sample(s, 3)
+        self.assertLess(set(sample), s)
+
+    def test_sample_dict(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        d = dict(a=1, b=2, c=3)
+        with self.assertRaises(TypeError):
+            sample = gen.sample(d, 2)
+
+    def test_sample_corner_cases(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        self.assertEqual(gen.sample([], 0), [])
+        with self.assertRaises(ValueError):
+            self.assertEqual(gen.sample([], 1))
+        with self.assertRaises(ValueError):
+            self.assertEqual(gen.sample([], -1))
 
     def test_count_samples_generated(self):
         # This is really a test for our count_samples_generated helper

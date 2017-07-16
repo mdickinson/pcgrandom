@@ -211,6 +211,65 @@ class PCG_XSH_RR_V0(_random.Random):
             raise IndexError("Cannot choose from an empty sequence")
         return seq[i]
 
+    def shuffle(self, x):
+        """Shuffle list x in place, and return None."""
+        # XXX Compatibility note: shuffle does not support the
+        # second 'random' argument.
+
+        
+
+
+
+        k = len(x)
+        for i in reversed(range(k)):
+            j = i + self._randbelow(k - i)
+            
+
+
+    def sample(self, population, k):
+        """Chooses k unique random elements from a population sequence or set.
+
+        Returns a new list containing elements from the population while
+        leaving the original population unchanged.  The resulting list is
+        in selection order so that all sub-slices will also be valid random
+        samples.  This allows raffle winners (the sample) to be partitioned
+        into grand prize and second place winners (the subslices).
+
+        Members of the population need not be hashable or unique.  If the
+        population contains repeats, then each occurrence is a possible
+        selection in the sample.
+
+        To choose a sample in a range of integers, use range as an argument.
+        This is especially fast and space efficient for sampling from a
+        large population:   sample(range(10000000), 60)
+        """
+        if isinstance(population, _collections.Set):
+            population = tuple(population)
+        if not isinstance(population, _collections.Sequence):
+            raise TypeError(
+                "Population must be a sequence or set.  "
+                "For dicts, use list(d).")
+
+        n = len(population)
+        if not 0 <= k <= n:
+            raise ValueError("Sample larger than population, or negative.")
+
+        # Algorithm based on one attributed to Robert Floyd, and appearing in
+        # "More Programming Pearls", by Jon Bentley.  See also the post to
+        # python-list dated May 28th 2010, entitled "A Friday Python
+        # Programming Pearl: random sampling".
+        d = {}
+        for i in reversed(range(k)):
+            j = i + self._randbelow(n - i)
+            if j in d:
+                d[i] = d[j]
+            d[j] = i
+
+        result = [None] * k
+        for j, i in d.items():
+            result[i] = population[j]
+        return result
+
     # Private helper functions.
 
     def _set_state_from_seed(self, seed):
