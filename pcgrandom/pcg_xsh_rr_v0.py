@@ -5,7 +5,9 @@
 # XXX References: O'Neill, L'Ecuyer, Knuth MMIX.
 # XXX Think harder about reproducibility; document it.
 # XXX Support Python 2.6? 3.3?
-# XXX Override shuffle, choices for reproducibility.
+# XXX Override choices for reproducibility.
+# XXX Refactor tests: setUp to create generator (then tests that are common
+#     to all generators can be moved to a mixin).
 
 import collections as _collections
 import operator as _operator
@@ -183,18 +185,15 @@ class PCG_XSH_RR_V0(_random.Random):
         if istep == 0:
             raise ValueError("zero step for randrange()")
         n = -(-width // istep)
-        if n <= 0:
+        if n > 0:
+            return istart + istep * self._randbelow(n)
+        else:
             raise ValueError(
                 "empty range for randrange({0}, {1}, {2})".format(
                     istart, istop, istep))
 
-        return istart + istep * self._randbelow(n)
-
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
-        if n <= 0:
-            raise ValueError("n must be positive")
-
         # Invariant: x is uniformly distributed in range(h).
         x, h = 0, 1
         while True:
@@ -207,26 +206,21 @@ class PCG_XSH_RR_V0(_random.Random):
 
     def choice(self, seq):
         """Choose a random element from a non-empty sequence."""
-        try:
-            i = self._randbelow(len(seq))
-        except ValueError:
+        n = len(seq)
+        if n == 0:
             raise IndexError("Cannot choose from an empty sequence")
-        return seq[i]
+        return seq[self._randbelow(n)]
 
     def shuffle(self, x):
         """Shuffle list x in place, and return None."""
         # XXX Compatibility note: shuffle does not support the
         # second 'random' argument.
 
-        
-
-
-
-        k = len(x)
-        for i in reversed(range(k)):
-            j = i + self._randbelow(k - i)
-            
-
+        n = len(x)
+        for i in reversed(range(n)):
+            j = i + self._randbelow(n - i)
+            if j > i:
+                x[i], x[j] = x[j], x[i]
 
     def sample(self, population, k):
         """Chooses k unique random elements from a population sequence or set.

@@ -289,13 +289,6 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             self.assertEqual(sample, samples[next_pos])
             current_pos = next_pos + 1
 
-    def test__randbelow(self):
-        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
-        with self.assertRaises(ValueError):
-            gen._randbelow(0)
-        with self.assertRaises(ValueError):
-            gen._randbelow(-5)
-
     def test_randrange_float_arguments(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
 
@@ -392,7 +385,7 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
 
         d = dict(a=1, b=2, c=3)
         with self.assertRaises(TypeError):
-            sample = gen.sample(d, 2)
+            gen.sample(d, 2)
 
     def test_sample_corner_cases(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
@@ -401,6 +394,38 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             self.assertEqual(gen.sample([], 1))
         with self.assertRaises(ValueError):
             self.assertEqual(gen.sample([], -1))
+
+    def test_shuffle(self):
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        population = list(range(13))
+
+        result = gen.shuffle(population)
+        self.assertIsNone(result)
+        self.assertNotEqual(population, list(range(13)))
+        self.assertEqual(set(population), set(range(13)))
+
+        population = list(range(4))
+
+        samples = []
+        for _ in range(10000):
+            gen.shuffle(population)
+            samples.append(tuple(population))
+
+        self.check_uniformity(
+            list(itertools.permutations(range(4))),
+            samples,
+        )
+
+    def test_shuffle_corner_cases(self):
+        # shuffling a length 0 or 1 sequence shouldn't be a problem
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+        population = []
+        gen.shuffle(population)
+        self.assertEqual(population, [])
+
+        population = [13]
+        gen.shuffle(population)
+        self.assertEqual(population, [13])
 
     def test_count_samples_generated(self):
         # This is really a test for our count_samples_generated helper
