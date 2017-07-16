@@ -86,6 +86,20 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         # unlikely in practice.
         self.assertNotEqual(sample1, sample2)
 
+    def test_seed_resets_gauss_state(self):
+        gen = PCG_XSH_RR_V0()
+
+        gen.seed(2143)
+        x1 = gen.random()
+        y1 = gen.gauss(0.0, 1.0)
+
+        gen.seed(2143)
+        x2 = gen.random()
+        y2 = gen.gauss(0.0, 1.0)
+
+        self.assertEqual(x1, x2)
+        self.assertEqual(y1, y2)
+
     def test_reproducibility(self):
         gen = PCG_XSH_RR_V0(seed=12345, sequence=0)
         die_rolls = [gen.randint(1, 6) for _ in range(20)]

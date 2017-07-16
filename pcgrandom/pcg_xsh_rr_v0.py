@@ -72,7 +72,7 @@ class PCG_XSH_RR_V0(_random.Random):
 
         self._multiplier = multiplier
         self._increment = increment
-        super(PCG_XSH_RR_V0, self).__init__(seed)
+        self.seed(seed)
 
     def seed(self, seed=None):
         """Initialize internal state from hashable object.
@@ -87,6 +87,7 @@ class PCG_XSH_RR_V0(_random.Random):
             seed = _operator.index(seed)
 
         self._set_state_from_seed(seed)
+        self.gauss_next = None
 
     def random(self):
         """Get the next random number in the range [0.0, 1.0)."""
