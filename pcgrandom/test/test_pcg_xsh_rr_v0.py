@@ -453,6 +453,20 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         sample = gen.choices(population, cum_weights=cum_weights, k=10000)
         self.check_goodness_of_fit(dict(zip(population, weights)), sample)
 
+    def test_choices_subnormal_weights(self):
+        # Corner case where random.Random triggers an IndexError.
+        gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
+
+        population = list(range(5))
+        weights = [1e-323, 0.0, 2e-323, 2e-323, 1e-323]
+        sample = gen.choices(population, weights=weights, k=10000)
+        self.check_goodness_of_fit(dict(zip(population, weights)), sample)
+
+        population = list(range(6))
+        weights = [1e-323, 0.0, 2e-323, 2e-323, 1e-323, 0.0]
+        sample = gen.choices(population, weights=weights, k=10000)
+        self.check_goodness_of_fit(dict(zip(population, weights)), sample)
+
     def test_choices_error_conditions(self):
         gen = PCG_XSH_RR_V0(seed=15206, sequence=1729)
 
@@ -536,9 +550,10 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
             expected weights. The weights need not be normalised.
         """
         counts = collections.Counter(sample)
-        # factor to convert weights to expected frequencies for this sample
-        scale = len(sample) / sum(weights.values())
-        expected = {i: w * scale for i, w in weights.items() if w}
+        # Expected frequencies for this sample.
+        total = sum(weights.values())
+        expected = {
+            i: w / total * len(sample) for i, w in weights.items() if w}
 
         # Check that we don't have any extraneous objects in our sample.  This
         # also acts as a check that elements with zero weight haven't been

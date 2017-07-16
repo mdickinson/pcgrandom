@@ -307,16 +307,14 @@ class PCG_XSH_RR_V0(_random.Random):
         if len(cum_weights) != len(population):
             raise ValueError(
                 "The number of weights does not match the population")
-        if cum_weights[-1] == 0:
+        total = cum_weights[-1]
+        if total == 0:
             raise ValueError(
                 "The total weight must be strictly positive.")
-
-        bisect = _bisect.bisect
-        total = cum_weights[-1]
-        bisectors = cum_weights[:-1]
+        bisectors = [weight / total for weight in cum_weights]
 
         return [
-            population[bisect(bisectors, self.random() * total)]
+            population[_bisect.bisect(bisectors, self.random())]
             for _ in range(k)
         ]
 
