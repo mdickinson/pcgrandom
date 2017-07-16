@@ -5,7 +5,9 @@
 # XXX References: O'Neill, L'Ecuyer, Knuth MMIX.
 # XXX Think harder about reproducibility; document it.
 # XXX Support Python 2.6? 3.3?
+# XXX Override shuffle, choices for reproducibility.
 
+import collections as _collections
 import operator as _operator
 import os as _os
 import random as _random
