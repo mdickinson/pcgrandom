@@ -10,7 +10,7 @@ import operator as _operator
 import os as _os
 import random as _random
 
-from future.builtins import int as _int
+from builtins import int as _int
 
 _UINT32_MASK = 2**32 - 1
 _UINT64_MASK = 2**64 - 1
