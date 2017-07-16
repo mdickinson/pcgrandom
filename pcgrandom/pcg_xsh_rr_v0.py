@@ -313,6 +313,11 @@ class PCG_XSH_RR_V0(_random.Random):
                 "The total weight must be strictly positive.")
         bisectors = [weight / total for weight in cum_weights]
 
+        # Note: a priori, the bisect call's return value could be
+        # len(population), which would cause an IndexError in the population
+        # lookup. However, that shouldn't happen: self.random() is strictly
+        # less than 1.0, and bisectors[-1] == 1.0, so the result of the bisect
+        # call should always be strictly smaller than len(population).
         return [
             population[_bisect.bisect(bisectors, self.random())]
             for _ in range(k)
