@@ -35,6 +35,10 @@ seq0_seed12345_sample = [
     'HT', 'C3', 'C8', 'DA', 'CA', 'D6', 'C6', 'H9',
     'SK', 'H8', 'HJ', 'H2', 'H6',
 ]
+seq0_seed12345_shuffle = [
+    5, 19, 1, 14, 10, 8, 11, 15, 18, 12,
+    3, 7, 4, 2, 17, 0, 13, 6, 9, 16,
+]
 
 
 # 99% values of the chi-squared statistic used in various
@@ -109,6 +113,11 @@ class Test_PCG_XSH_RR_V0(unittest.TestCase):
         # Sampling
         sample = gen.sample(cards, 13)
         self.assertEqual(sample, seq0_seed12345_sample)
+
+        # Shuffling
+        population = list(range(20))
+        gen.shuffle(population)
+        self.assertEqual(population, seq0_seed12345_shuffle)
 
     def test_sequence_default(self):
         gen1 = PCG_XSH_RR_V0(seed=12345, sequence=0)

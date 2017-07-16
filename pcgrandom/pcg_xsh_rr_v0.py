@@ -8,6 +8,7 @@
 # XXX Override choices for reproducibility.
 # XXX Refactor tests: setUp to create generator (then tests that are common
 #     to all generators can be moved to a mixin).
+# XXX Fix use of __getstate__ and __reduce__.
 
 import collections as _collections
 import operator as _operator
