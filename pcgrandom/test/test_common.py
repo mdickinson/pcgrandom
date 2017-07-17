@@ -20,6 +20,75 @@ chisq_99percentile = {
 
 
 class TestCommon(object):
+    def test_creation_without_seed(self):
+        gen1 = self.gen_class()
+        gen2 = self.gen_class()
+
+        sample1 = [gen1.random() for _ in range(10)]
+        sample2 = [gen2.random() for _ in range(10)]
+
+        # Possible in theory for these two samples to be identical; vanishingly
+        # unlikely in practice.
+        self.assertNotEqual(sample1, sample2)
+
+    def test_sequence_default(self):
+        gen1 = self.gen_class(seed=12345, sequence=0)
+        gen2 = self.gen_class(seed=12345)
+        self.assertEqual(gen1.getstate(), gen2.getstate())
+
+    def test_independent_sequences(self):
+        # Crude statistical test for lack of correlation. If X and Y are
+        # independent and uniform on [0, 1], then (X - 0.5) * (Y - 0.5) has
+        # mean 0 and standard deviation 1/12. By the central limit theorem, we
+        # expect the average V of N such independent values to be roughly
+        # normally distributed with mean 0 and standard deviation 1 /
+        # (12*sqrt(N)). So we expect |V| to be at most 1 / (4*sqrt(N)) with
+        # over 99% probability.
+        gen1 = self.gen_class(seed=12345, sequence=0)
+        gen2 = self.gen_class(seed=12345, sequence=1)
+        N = 10000
+        xs = [gen1.random() for _ in range(N)]
+        ys = [gen2.random() for _ in range(N)]
+        v = sum((x - 0.5) * (y - 0.5) for x, y in zip(xs, ys)) / N
+        # Check we're within 3 standard deviations of the mean.
+        self.assertLess(abs(v), 0.25/math.sqrt(N))
+
+    def test_no_shared_state(self):
+        # Get samples first from gen1, then from gen2.
+        gen1 = self.gen_class(seed=12345, sequence=0)
+        gen2 = self.gen_class(seed=12345, sequence=1)
+        sample1_1 = [gen1.random() for _ in range(10)]
+        sample2_1 = [gen2.random() for _ in range(10)]
+
+        # Now in the opposite order: from gen2, then from gen1.
+        gen1 = self.gen_class(seed=12345, sequence=0)
+        gen2 = self.gen_class(seed=12345, sequence=1)
+        sample2_2 = [gen2.random() for _ in range(10)]
+        sample1_2 = [gen1.random() for _ in range(10)]
+
+        # Now interleaved.
+        gen1 = self.gen_class(seed=12345, sequence=0)
+        gen2 = self.gen_class(seed=12345, sequence=1)
+        sample1_3 = []
+        sample2_3 = []
+        for _ in range(10):
+            sample1_3.append(gen1.random())
+            sample2_3.append(gen2.random())
+
+        # Results should be the same in all cases.
+        self.assertEqual(sample1_1, sample1_2)
+        self.assertEqual(sample1_1, sample1_3)
+        self.assertEqual(sample2_1, sample2_2)
+        self.assertEqual(sample2_1, sample2_3)
+
+    def test_restore_state_from_different_generator(self):
+        state = self.gen.getstate()
+
+        bad_version = 'pcgrandom.BOGUS'
+        bad_state = (bad_version,) + state[1:]
+        with self.assertRaises(ValueError):
+            self.gen.setstate(bad_state)
+
     def test_save_and_restore_state(self):
         # Generate some values.
         [self.gen.random() for _ in range(10)]

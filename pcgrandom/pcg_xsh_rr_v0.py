@@ -11,6 +11,9 @@
 # XXX Fix use of __getstate__ and __reduce__.
 # XXX Style: make exceptions consistent (capital letter, full stop).
 # XXX Decide whether we really need the future dependency.
+# XXX Mark the version strings explicitly as Unicode, for Python 2 / Python 3
+#     compatibility.
+# XXX Rework reproducibility tests: JSON format for the results might work.
 
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
