@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
 

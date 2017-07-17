@@ -34,7 +34,7 @@ class PCGCommon(_random.Random):
         # changes.  See also http://bugs.python.org/issue27706.
         if seed is None:
             nbytes = self._state_bits // 8
-            seed = _int.from_bytes(_os.urandom(nbytes), byteorder='little')
+            seed = _int.from_bytes(_os.urandom(nbytes), byteorder="little")
         else:
             seed = _operator.index(seed)
 
@@ -181,9 +181,9 @@ class PCGCommon(_random.Random):
 
         # Left-to-right binary powering algorithm.
         an, cn = 1, 0
-        for bit in format(n, 'b'):
+        for bit in format(n, "b"):
             an, cn = an * an & m, an * cn + cn & m
-            if bit == '1':
+            if bit == "1":
                 an, cn = a * an & m, a * cn + c & m
 
         self._state = self._state * an + cn & m
@@ -200,7 +200,7 @@ class PCGCommon(_random.Random):
     def shuffle(self, x):
         """Shuffle list x in place, and return None."""
         # XXX Compatibility note: shuffle does not support the
-        # second 'random' argument.
+        # second "random" argument.
 
         n = len(x)
         for i in reversed(_range(n)):

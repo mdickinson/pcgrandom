@@ -15,6 +15,8 @@
 #     compatibility.
 # XXX Rework reproducibility tests: JSON format for the results might work.
 
+from __future__ import unicode_literals
+
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
 
