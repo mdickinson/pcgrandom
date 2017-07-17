@@ -42,7 +42,7 @@ class PCG_XSL_RR_V0(_PCGCommon):
     PCG-XSL-RR, sitting on a 128-bit LCG with multiplier from L'Ecuyer.
     """
 
-    VERSION = "pcgrandom.PCG_XSL_RR_V0"
+    VERSION = u"pcgrandom.PCG_XSL_RR_V0"
 
     _state_bits = 128
 

@@ -20,6 +20,9 @@ chisq_99percentile = {
 
 
 class TestCommon(object):
+    def test_version_is_unicode(self):
+        self.assertIsInstance(self.gen.VERSION, type(u''))
+
     def test_creation_without_seed(self):
         gen1 = self.gen_class()
         gen2 = self.gen_class()
