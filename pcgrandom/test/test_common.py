@@ -45,6 +45,16 @@ class TestCommon(object):
                 (old_state * 5 + gen._increment) % (2**gen._state_bits)
             )
 
+    def test_state_includes_multiplier(self):
+        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        state = gen.getstate()
+        words = [gen._next_output() for _ in range(10)]
+
+        gen2 = self.gen_class()
+        gen2.setstate(state)
+        same_again = [gen2._next_output() for _ in range(10)]
+        self.assertEqual(words, same_again)
+
     def test_bad_multiplier(self):
         with self.assertRaises(ValueError):
             self.gen_class(seed=123, sequence=0, multiplier=7)
