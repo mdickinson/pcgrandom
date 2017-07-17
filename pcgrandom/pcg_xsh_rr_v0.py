@@ -59,7 +59,7 @@ class PCG_XSH_RR_V0(_PCGCommon):
     _output_bits = 32
 
     # Multiplier reportedly used by Knuth for the MMIX LCG.
-    _multiplier = 6364136223846793005
+    _default_multiplier = 6364136223846793005
 
     # Increment reportedly used by Knuth for the MMIX LCG.
     _base_increment = 1442695040888963407

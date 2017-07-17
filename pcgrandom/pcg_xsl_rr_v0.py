@@ -48,7 +48,7 @@ class PCG_XSL_RR_V0(_PCGCommon):
 
     _output_bits = 64
 
-    _multiplier = _LECUYER_MULTIPLIER
+    _default_multiplier = _LECUYER_MULTIPLIER
 
     _base_increment = _128BIT_INCREMENT
 
