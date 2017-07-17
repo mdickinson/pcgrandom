@@ -47,8 +47,8 @@ class PCG_XSL_RR_V0(_PCGCommon):
     # Multiplier from Table 4 of L'Ecuyer's paper.
     _default_multiplier = 47026247687942121848144207491837523525
 
-    # A somewhat arbitrary increment.
-    _base_increment = 209568312854995847869081903677183368518
+    # A somewhat arbitrary increment, chosen at random.
+    _base_increment = 209568312854995847869081903677183368519
 
     def _get_output(self):
         """Compute output from current state."""
