@@ -34,6 +34,31 @@ class TestCommon(object):
         # unlikely in practice.
         self.assertNotEqual(sample1, sample2)
 
+    def test_specification_of_multiplier(self):
+        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        for _ in range(10):
+            old_state = gen._state
+            gen._advance_state()
+            new_state = gen._state
+            self.assertEqual(
+                new_state,
+                (old_state * 5 + gen._increment) % (2**gen._state_bits)
+            )
+
+    def test_state_includes_multiplier(self):
+        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        state = gen.getstate()
+        words = [gen._next_output() for _ in range(10)]
+
+        gen2 = self.gen_class()
+        gen2.setstate(state)
+        same_again = [gen2._next_output() for _ in range(10)]
+        self.assertEqual(words, same_again)
+
+    def test_bad_multiplier(self):
+        with self.assertRaises(ValueError):
+            self.gen_class(seed=123, sequence=0, multiplier=7)
+
     def test_sequence_default(self):
         gen1 = self.gen_class(seed=12345, sequence=0)
         gen2 = self.gen_class(seed=12345)

@@ -16,13 +16,22 @@ class PCGCommon(_random.Random):
     """
     Common base class for the PCG random generators.
     """
-    def __init__(self, seed=None, sequence=0):
-        self._state_mask = ~(-1 << self._state_bits)
+    def __init__(self, seed=None, sequence=0, multiplier=None):
+        self._state_mask = ~(~0 << self._state_bits)
+
+        if multiplier is None:
+            multiplier = self._default_multiplier
+        multiplier = _operator.index(multiplier) & self._state_mask
         sequence = _operator.index(sequence) & self._state_mask
-        self._increment = (
-            2 * sequence + self._base_increment
-            & self._state_mask
-        )
+        increment = 2 * sequence + self._base_increment & self._state_mask
+
+        # The multiplier must be congruent to 1 modulo 4 to achieve
+        # full period. (Hull-Dobell theorem.)
+        if multiplier % 4 != 1:
+            raise ValueError("multiplier must be of the form 4k+1")
+
+        self._multiplier = multiplier
+        self._increment = increment
         self.seed(seed)
 
     def seed(self, seed=None):
