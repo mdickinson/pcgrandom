@@ -15,8 +15,6 @@
 #     compatibility.
 # XXX Rework reproducibility tests: JSON format for the results might work.
 
-from __future__ import unicode_literals
-
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
 
@@ -54,7 +52,7 @@ class PCG_XSH_RR_V0(_PCGCommon):
     PCG-XSH-RR, sitting on a 64-bit LCG from Knuth.
     """
 
-    VERSION = "pcgrandom.PCG_XSH_RR_V0"
+    VERSION = u"pcgrandom.PCG_XSH_RR_V0"
 
     _state_bits = 64
 
