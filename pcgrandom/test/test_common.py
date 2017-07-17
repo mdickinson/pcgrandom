@@ -182,7 +182,7 @@ class TestCommon(object):
 
         bad_counts = 0
         for count in counts.values():
-            if abs(counts[0] - 0.5*nsamples) > 1.5*math.sqrt(nsamples):
+            if abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples):
                 bad_counts += 1
 
         # There's about a 1 in 370 chance of any one count being bad,
