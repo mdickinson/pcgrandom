@@ -1,15 +1,11 @@
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
+# Reference for multiplier: "Tables of linear congruential generators of
+# different sizes and good lattice stucture", Pierre L'Ecuyer, Mathematics of
+# Computation vol. 68, no. 225, January 1999, pp 249-260.
+
 
 _UINT64_MASK = 2**64 - 1
-
-# Constant from Table 4 of "Tables of linear congruential generators of
-# different sizes and good lattice stucture", Pierre L'Ecuyer, Mathematics of
-# Computation vol. 68, no. 225, January 1999, pp 249-260. The increment is
-# chosen randomly.
-_LECUYER_MULTIPLIER = 47026247687942121848144207491837523525
-_128BIT_INCREMENT = 209568312854995847869081903677183368518
-
 
 def _rotate64(v, r):
     """
@@ -48,9 +44,11 @@ class PCG_XSL_RR_V0(_PCGCommon):
 
     _output_bits = 64
 
-    _default_multiplier = _LECUYER_MULTIPLIER
+    # Multiplier from Table 4 of L'Ecuyer's paper.
+    _default_multiplier = 47026247687942121848144207491837523525
 
-    _base_increment = _128BIT_INCREMENT
+    # A somewhat arbitrary increment.
+    _base_increment = 209568312854995847869081903677183368518
 
     def _get_output(self):
         """Compute output from current state."""
