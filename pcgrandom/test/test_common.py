@@ -159,6 +159,26 @@ class TestCommon(object):
         self.gen.jumpahead(0)
         self.assertEqual(self.gen.getstate(), state)
 
+    def test_invertible(self):
+        gen = self.gen_class(seed=12345)
+        state = gen.getstate()
+        gen.jumpahead(-1)
+        gen._next_output()
+        self.assertEqual(gen.getstate(), state)
+
+    def test_full_period(self):
+        gen = self.gen_class(seed=12345)
+        expected_period = 2**gen._state_bits
+        half_period = expected_period // 2
+
+        state_start = gen.getstate()
+        gen.jumpahead(half_period)
+        state_half = gen.getstate()
+        gen.jumpahead(half_period)
+        state_full = gen.getstate()
+        self.assertEqual(state_start, state_full)
+        self.assertNotEqual(state_start, state_half)
+
     def test_state_preserves_gauss(self):
         # Test a state with gauss_next = None
         state = self.gen.getstate()
