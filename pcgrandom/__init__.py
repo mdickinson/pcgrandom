@@ -16,9 +16,6 @@ from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
 from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
 from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 
-# XXX Compatibility note: from pcgrandom import * includes a few
-#     extra names, which could potentially override existing user
-#     names.
 __all__ = [
     # Generators.
     "PCG_XSH_RR_V0", "PCG_XSH_RS_V0", "PCG_XSL_RR_V0",
