@@ -57,10 +57,10 @@ class TestPCGCommon(object):
         # distribution with mean 0.5*nsamples and standard deviation
         # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
         # standard deviations from the mean.
-        bad_counts = 0
-        for count in counts.values():
-            if abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples):
-                bad_counts += 1
+        bad_counts = sum(
+            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
+            for count in counts.values()
+        )
 
         # There's about a 1 in 370 chance of any one count being bad,
         # and the counts should be independent. To be safe, we allow
@@ -271,11 +271,10 @@ class TestPCGCommon(object):
         # distribution with mean 0.5*nsamples and standard deviation
         # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
         # standard deviations from the mean.
-
-        bad_counts = 0
-        for count in counts.values():
-            if abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples):
-                bad_counts += 1
+        bad_counts = sum(
+            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
+            for count in counts.values()
+        )
 
         # There's about a 1 in 370 chance of any one count being bad,
         # and the counts should be independent. To be safe, we allow
