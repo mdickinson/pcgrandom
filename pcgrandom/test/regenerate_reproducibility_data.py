@@ -12,20 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Script to regenerate the reproducibility data used by the reproducibility
+tests.
+
 """
-Code to generate a JSON "fingerprint" for a generator. This is used for
-reproducibility testing, as well as checking portability of pickles.
-"""
+import argparse
+
 from pcgrandom.test.fingerprint import write_fingerprints
 from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
 from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 
 
-if __name__ == '__main__':
-    write_fingerprints(
-        generators=[
-            PCG_XSH_RR_V0(seed=12345),
-            PCG_XSL_RR_V0(seed=41509),
-        ],
-        filename='generator_fingerprints.json',
+def generators():
+    """Return the specific generators to be used for reproducibility testing.
+    """
+    return [
+        PCG_XSH_RR_V0(seed=12345),
+        PCG_XSL_RR_V0(seed=41509),
+    ]
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Regenerate reproducibility data.",
     )
+    parser.add_argument(
+        "-o", "--output",
+        default="generator_fingerprints.json",
+        help="Output path to write the data to (default: %(default)r).",
+    )
+
+    args = parser.parse_args()
+
+    write_fingerprints(
+        generators=generators(),
+        filename=args.output,
+    )
+
+
+if __name__ == '__main__':
+    main()
