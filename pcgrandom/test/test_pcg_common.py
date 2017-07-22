@@ -266,6 +266,12 @@ class TestPCGCommon(object):
         with self.assertRaises(ValueError):
             self.gen.getrandbits(-1)
 
+    def test_getrandbits_int(self):
+        # Check that we don't get longs on Python 2, for small inputs.
+        xs = [self.gen.getrandbits(31) for _ in range(100)]
+        for x in xs:
+            self.assertIsInstance(x, int)
+
     def test_randrange_uniform(self):
         n = 13
         samples = [self.gen.randrange(n) for _ in range(10000)]
@@ -339,6 +345,11 @@ class TestPCGCommon(object):
             self.gen.randrange(22, 22, -1)
         with self.assertRaises(ValueError):
             self.gen.randrange(47, 47, 1)
+
+    def test_randrange_int(self):
+        xs = [self.gen.randrange(2**31) for _ in range(100)]
+        for x in xs:
+            self.assertIsInstance(x, int)
 
     def test_choice(self):
         with self.assertRaises(IndexError):

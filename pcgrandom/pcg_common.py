@@ -103,7 +103,8 @@ class PCGCommon(_random.Random):
         acc = 0
         for _ in _range(numwords):
             acc = acc << output_bits | self._next_output()
-        return acc >> excess_bits
+        # int call converts small longs to ints on Python 2.
+        return int(acc >> excess_bits)
 
     def random(self):
         """Get the next random number in the range [0.0, 1.0)."""
@@ -117,7 +118,8 @@ class PCGCommon(_random.Random):
         while True:
             q, r = divmod(h, n)
             if r <= x:
-                return (x - r) // q
+                # int call converts small longs to ints on Python 2.
+                return int((x - r) // q)
             x, h = x << output_bits | self._next_output(), r << output_bits
 
     def randrange(self, start, stop=None, step=None):
