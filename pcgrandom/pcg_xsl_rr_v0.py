@@ -4,8 +4,8 @@ from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 # different sizes and good lattice stucture", Pierre L'Ecuyer, Mathematics of
 # Computation vol. 68, no. 225, January 1999, pp 249-260.
 
-
 _UINT64_MASK = 2**64 - 1
+
 
 def _rotate64(v, r):
     """
