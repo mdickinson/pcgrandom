@@ -42,7 +42,7 @@ class PCGCommon(_random.Random):
         # The multiplier must be congruent to 1 modulo 4 to achieve
         # full period. (Hull-Dobell theorem.)
         if multiplier % 4 != 1:
-            raise ValueError("multiplier must be of the form 4k+1")
+            raise ValueError("LCG multiplier must be of the form 4k+1.")
 
         self._multiplier = multiplier
         self._increment = increment
@@ -74,8 +74,8 @@ class PCGCommon(_random.Random):
         version = state[0]
         if version != self.VERSION:
             raise ValueError(
-                "state with version {0!r} passed to "
-                "setstate() of version {1!r}".format(version, self.VERSION)
+                "State with version {0!r} passed to "
+                "setstate() of version {1!r}.".format(version, self.VERSION)
             )
 
         parameters, state, gauss_next = state[1:]
@@ -143,7 +143,7 @@ class PCGCommon(_random.Random):
                 return self._randbelow(istart)
             else:
                 raise ValueError(
-                    "empty range for randrange({0})".format(istart))
+                    "Empty range for randrange({0}).".format(istart))
 
         istop = _operator.index(stop)
         width = istop - istart
@@ -152,18 +152,18 @@ class PCGCommon(_random.Random):
                 return istart + self._randbelow(width)
             else:
                 raise ValueError(
-                    "empty range for randrange({0}, {1})".format(
+                    "Empty range for randrange({0}, {1}).".format(
                         istart, istop))
 
         istep = _operator.index(step)
         if istep == 0:
-            raise ValueError("zero step for randrange()")
+            raise ValueError("Zero step for randrange().")
         n = -(-width // istep)
         if n > 0:
             return istart + istep * self._randbelow(n)
         else:
             raise ValueError(
-                "empty range for randrange({0}, {1}, {2})".format(
+                "Empty range for randrange({0}, {1}, {2}).".format(
                     istart, istop, istep))
 
     def _advance_state(self):
@@ -219,7 +219,7 @@ class PCGCommon(_random.Random):
         """Choose a random element from a non-empty sequence."""
         n = len(seq)
         if n == 0:
-            raise IndexError("Cannot choose from an empty sequence")
+            raise IndexError("Cannot choose from an empty sequence.")
         return seq[self._randbelow(n)]
 
     def shuffle(self, x):
@@ -297,7 +297,7 @@ class PCGCommon(_random.Random):
         if cum_weights is None:
             if weights is None:
                 if len(population) == 0:
-                    raise IndexError("Cannot choose from an empty population")
+                    raise IndexError("Cannot choose from an empty population.")
                 return [self.choice(population) for _ in _range(k)]
             cum_weights, acc = [], 0
             for weight in weights:
@@ -305,13 +305,13 @@ class PCGCommon(_random.Random):
                 cum_weights.append(acc)
         elif weights is not None:
             raise TypeError(
-                "Cannot specify both weights and cumulative weights")
+                "Cannot specify both weights and cumulative weights.")
 
         if len(population) == 0:
-            raise IndexError("Cannot choose from an empty population")
+            raise IndexError("Cannot choose from an empty population.")
         if len(cum_weights) != len(population):
             raise ValueError(
-                "The number of weights does not match the population")
+                "The number of weights does not match the population.")
         total = cum_weights[-1]
         if total == 0:
             raise ValueError(
