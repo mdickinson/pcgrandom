@@ -14,11 +14,9 @@
 
 from setuptools import find_packages, setup
 
-long_description = """
-Random classes based on the PCG family of generators.
 
-Provides a PCG-based drop-in replacement for Python's random.Random.
-"""
+with open('README.rst') as readme:
+    long_description = readme.read()
 
 setup(
     name="pcgrandom",

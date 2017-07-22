@@ -51,10 +51,6 @@ class PCGCommon(_random.Random):
     def seed(self, seed=None):
         """Initialize internal state from hashable object.
         """
-        # XXX Compatibility note: unlike the base Random generator, we don't
-        # permit seeding from an arbitrary hashable object, since that makes it
-        # harder to guarantee reproducibility in the case that the hash
-        # changes.  See also http://bugs.python.org/issue27706.
         if seed is None:
             nbytes = self._state_bits // 8
             seed = _int.from_bytes(_os.urandom(nbytes), byteorder="little")
@@ -91,8 +87,6 @@ class PCGCommon(_random.Random):
         k : nonnegative integer
 
         """
-        # XXX Compatibility note: k=0 is accepted.
-
         k = _operator.index(k)
         if k < 0:
             raise ValueError("Number of bits should be nonnegative.")
@@ -129,14 +123,6 @@ class PCGCommon(_random.Random):
         # Reimplemented from the base class to ensure reproducibility
         # across Python versions. The code below is adapted from that
         # in Python 3.6.
-
-        # XXX Compatibility: randrange accepts numpy ints.
-        # XXX Compatibility: randrange does not accept floats;
-        #     an attempt to pass a float (integral or not) raises
-        #     TypeError. (For Random, it raises ValueError for non-integral
-        #     floats and is accepted for integral floats.) Similarly,
-        #     Decimal objects aren't supported.
-
         istart = _operator.index(start)
         if stop is None:
             if istart > 0:
@@ -224,9 +210,6 @@ class PCGCommon(_random.Random):
 
     def shuffle(self, x):
         """Shuffle list x in place, and return None."""
-        # XXX Compatibility note: shuffle does not support the
-        # second "random" argument.
-
         n = len(x)
         for i in reversed(_range(n)):
             j = i + self._randbelow(n - i)
@@ -283,17 +266,12 @@ class PCGCommon(_random.Random):
         If the relative weights or cumulative weights are not specified,
         the selections are made with equal probability.
 
+        The ``cum_weights`` and ``k`` arguments should be considered
+        keyword-only. Regrettably, this can't be enforced in Python
+        2-compatible code.
         """
-        # XXX Compatibility note: cum_weights can be passed by position, but
-        # please don't. This is only for Python 2 support.
-        # XXX Compatibility note: if the sum of the weights is zero, a
-        # ValueError is raised rather than an IndexError.
-        # XXX Compatibility note: an IndexError is raised for an empty
-        # population, even if k=0.
-
         # Code modified to remove the possibility of IndexError due to double
         # rounding or subnormal weights. See http://bugs.python.org/issue24567
-
         if cum_weights is None:
             if weights is None:
                 if len(population) == 0:

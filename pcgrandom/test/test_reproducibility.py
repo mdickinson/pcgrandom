@@ -55,3 +55,11 @@ class TestReproducibility(unittest.TestCase):
                     generator_data['fingerprint'],
                     computed_data['fingerprint'],
                 )
+
+    def test_doc_reproducibility_example(self):
+        # Example used in the README documentation. If for whatever reason
+        # this changes, update the README.
+        from pcgrandom import PCG_XSH_RR_V0
+        gen = PCG_XSH_RR_V0(seed=67182)
+        seq = ''.join(gen.choice('0123456789') for _ in range(20))
+        self.assertEqual(seq, '15183975423492044867')
