@@ -33,7 +33,7 @@ chisq_99percentile = {
 }
 
 
-class TestCommon(object):
+class TestPCGCommon(object):
     def test_version_is_unicode(self):
         self.assertIsInstance(self.gen.VERSION, type(u''))
 
