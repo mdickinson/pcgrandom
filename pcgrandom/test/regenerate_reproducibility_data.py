@@ -35,7 +35,7 @@ def generators():
     ]
 
 
-def main():
+def regenerate_data_main():
     parser = argparse.ArgumentParser(
         description="Regenerate reproducibility data.",
     )
@@ -54,4 +54,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    regenerate_data_main()
