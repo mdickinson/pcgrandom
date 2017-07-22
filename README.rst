@@ -16,25 +16,6 @@ Features
   (``jumpahead``).
 
 
-Available generators
---------------------
-A number of generators from the PCG family are available.
-
-- ``PCG_XSH_RR_V0`` is a generator with 32-bit output and a 64-bit state.
-- ``PCG_XSH_RS_V0`` is another generator with 32-bit output and 64-bit state.
-  It has slightly different characteristics from ``PCG_XSH_RR_V0``: improved
-  performance, but weaker statistical guarantees.
-- ``PCG_XSL_RR_V0`` has 64-bit output and 128-bit state.
-
-Each of these generators has the same API as ``random.Random``, and can be
-imported directly from the ``pcgrandom`` module::
-
-    >>> from pcgrandom import PCG_XSH_RR_V0
-    >>> gen = PCG_XSH_RR_V0(seed=67182)
-    >>> ''.join(gen.choice('0123456789') for _ in range(20))
-    '15183975423492044867'
-
-
 API compatibility
 -----------------
 In the simplest case, the package can be used as a drop-in replacement for
@@ -58,6 +39,25 @@ and its methods made immediately available in ``pcgrandom``::
     0.8538476833982533
     >>> randint(1, 6)  # roll a die
     5
+
+
+Available generators
+--------------------
+A number of generators from the PCG family are available.
+
+- ``PCG_XSH_RR_V0`` is a generator with 32-bit output and a 64-bit state.
+- ``PCG_XSH_RS_V0`` is another generator with 32-bit output and 64-bit state.
+  It has slightly different characteristics from ``PCG_XSH_RR_V0``: improved
+  performance, but weaker statistical guarantees.
+- ``PCG_XSL_RR_V0`` has 64-bit output and 128-bit state.
+
+Each of these generators has the same API as ``random.Random``, and can be
+imported directly from the ``pcgrandom`` module::
+
+    >>> from pcgrandom import PCG_XSH_RR_V0
+    >>> gen = PCG_XSH_RR_V0(seed=67182)
+    >>> ''.join(gen.choice('0123456789') for _ in range(20))
+    '15183975423492044867'
 
 
 Reproducibility guarantees
