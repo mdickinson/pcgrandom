@@ -12,36 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import base64
 import json
 import pickle
 import pkgutil
 import unittest
 
-from pcgrandom.test.fingerprint import Sampler
-
-
-fingerprints = json.loads(
-    pkgutil.get_data('pcgrandom.test', 'data/generator_fingerprints.json')
-)
-
-
-def list_to_tuple(l):
-    """Recursive list to tuple conversion."""
-    if isinstance(l, list):
-        return tuple(map(list_to_tuple, l))
-    else:
-        return l
-
-
-def string_to_bytes(s):
-    """Reverse transformation for bytes_to_string.
-    """
-    return base64.b64decode(s.encode('ascii'))
+from pcgrandom.test.fingerprint import Sampler, string_to_bytes, list_to_tuple
 
 
 class TestReproducibility(unittest.TestCase):
     def test_reproducibility(self):
+        fingerprints = json.loads(
+            pkgutil.get_data(
+                'pcgrandom.test', 'data/generator_fingerprints.json'))
+
         for generator_data in fingerprints['generators']:
             # For each pickle, we create the generator from the pickle
             # and then take its fingerprint. First we need to find only
