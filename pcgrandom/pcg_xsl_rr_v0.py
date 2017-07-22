@@ -14,34 +14,29 @@
 
 from pcgrandom.pcg_common import PCGCommon as _PCGCommon
 
-# Reference for multiplier: "Tables of linear congruential generators of
-# different sizes and good lattice stucture", Pierre L'Ecuyer, Mathematics of
-# Computation vol. 68, no. 225, January 1999, pp 249-260.
 
-_UINT64_MASK = 2**64 - 1
-
-
-def _rotate64(v, r):
+def _rotate64(v, r, _multiplier=2**64 + 1, _mask=2**64 - 1):
     """
-    An unsigned 64-bit bitwise "clockwise" rotation of r bits on v.
+    Unsigned 64-bit bitwise "clockwise" rotation.
 
-    If v has more than 64 bits, only the least significant 64 bits
-    are used.
+    Extract the least significant 64 bits of *v*, shift them right
+    by *r* bits, and move any bits shifted out into the vacated
+    most significant bits of *v*.
 
     Parameters
     ----------
-    v : integer in range 0 <= v < 2**64
-        The value to rotate.
+    v : Nonnegative integer.
+        The value to rotate. Bits outside the 64 least significant
+        bits are discarded before the rotation.
     r : integer in the range 0 <= r < 64
         The number of bits to rotate by.
 
     Returns
     -------
     integer in range 0 <= v < 2**64
-        Result of shifting v right by r places, rotating the
-        bits that drop off back into the high end of v.
+        Result of the rotation.
     """
-    return (v >> r | v << (64-r)) & _UINT64_MASK
+    return (v & _mask) * _multiplier >> r & _mask
 
 
 class PCG_XSL_RR_V0(_PCGCommon):
@@ -67,5 +62,4 @@ class PCG_XSL_RR_V0(_PCGCommon):
     def _get_output(self):
         """Compute output from current state."""
         state = self._state
-        output_word = (state ^ (state >> 64)) & _UINT64_MASK
-        return _rotate64(output_word, state >> 122)
+        return _rotate64(state ^ (state >> 64), state >> 122)
