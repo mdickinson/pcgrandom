@@ -22,13 +22,6 @@ from past.builtins import long
 
 import pcgrandom
 
-from pcgrandom import (
-    PCG_XSH_RR_V0,
-    PCG32,
-    PCG64,
-    Random,
-)
-
 
 class TestPCGRandom(unittest.TestCase):
     def test___all__(self):
