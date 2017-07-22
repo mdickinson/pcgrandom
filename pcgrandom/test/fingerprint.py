@@ -103,14 +103,6 @@ def string_to_bytes(s):
     return base64.b64decode(s.encode('ascii'))
 
 
-def list_to_tuple(l):
-    """Recursive list to tuple conversion."""
-    if isinstance(l, list):
-        return tuple(map(list_to_tuple, l))
-    else:
-        return l
-
-
 def tuple_to_list(l):
     """Recursive tuple to list conversion."""
     if isinstance(l, tuple):
