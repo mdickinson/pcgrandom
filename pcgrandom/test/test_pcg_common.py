@@ -37,6 +37,36 @@ class TestPCGCommon(object):
     def test_version_is_unicode(self):
         self.assertIsInstance(self.gen.VERSION, type(u''))
 
+    def test_direct_generator_output(self):
+        # Direct test of _next_output method.
+        nsamples = 10000
+        output_size = self.gen._output_bits
+        samples = [self.gen._next_output() for _ in range(nsamples)]
+
+        # Check that all samples are in the expected range.
+        self.assertLessEqual(0, min(samples))
+        self.assertLess(max(samples), 2**output_size)
+
+        # Count number of times individual bits have appeared.
+        counts = {}
+        for bitpos in range(output_size):
+            bit = 2**bitpos
+            counts[bitpos] = sum(1 for sample in samples if (sample & bit))
+
+        # Assuming that each bit is "fair", each count roughly follows a normal
+        # distribution with mean 0.5*nsamples and standard deviation
+        # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
+        # standard deviations from the mean.
+        bad_counts = sum(
+            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
+            for count in counts.values()
+        )
+
+        # There's about a 1 in 370 chance of any one count being bad,
+        # and the counts should be independent. To be safe, we allow
+        # up to three bad counts before failing.
+        self.assertLessEqual(bad_counts, 3)
+
     def test_creation_without_seed(self):
         gen1 = self.gen_class()
         gen2 = self.gen_class()
@@ -241,11 +271,10 @@ class TestPCGCommon(object):
         # distribution with mean 0.5*nsamples and standard deviation
         # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
         # standard deviations from the mean.
-
-        bad_counts = 0
-        for count in counts.values():
-            if abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples):
-                bad_counts += 1
+        bad_counts = sum(
+            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
+            for count in counts.values()
+        )
 
         # There's about a 1 in 370 chance of any one count being bad,
         # and the counts should be independent. To be safe, we allow
