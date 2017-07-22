@@ -22,6 +22,9 @@ from pcgrandom.test.fingerprint import write_fingerprints
 from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
 from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 
+# Default filename to use for output.
+DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
+
 
 def generators():
     """Return the specific generators to be used for reproducibility testing.
@@ -38,7 +41,7 @@ def main():
     )
     parser.add_argument(
         "-o", "--output",
-        default="generator_fingerprints.json",
+        default=DEFAULT_REPRODUCIBILITY_FILENAME,
         help="Output path to write the data to (default: %(default)r).",
     )
 
