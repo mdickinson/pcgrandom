@@ -17,7 +17,7 @@ import pickle
 import pkgutil
 import unittest
 
-from pcgrandom.test.fingerprint import Sampler, string_to_bytes, list_to_tuple
+from pcgrandom.test.fingerprint import json_fingerprint, string_to_bytes
 
 
 class TestReproducibility(unittest.TestCase):
@@ -45,13 +45,13 @@ class TestReproducibility(unittest.TestCase):
             for protocol in usable_protocols:
                 pickled_generator = pickles_by_protocol[protocol]
                 generator = pickle.loads(string_to_bytes(pickled_generator))
+                computed_data = json_fingerprint(generator)
 
-                # The JSON-serialised state ends up with lists where
-                # there were originally tuples. Convert back.
-                stored_state = list_to_tuple(generator_data['state'])
-                computed_state = generator.getstate()
-                self.assertEqual(computed_state, stored_state)
-
-                stored_fingerprint = generator_data['fingerprint']
-                computed_fingerprint = Sampler(generator).samples()
-                self.assertEqual(computed_fingerprint, stored_fingerprint)
+                self.assertEqual(
+                    generator_data['state'],
+                    computed_data['state'],
+                )
+                self.assertEqual(
+                    generator_data['fingerprint'],
+                    computed_data['fingerprint'],
+                )

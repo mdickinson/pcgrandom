@@ -17,6 +17,7 @@ Utilities to create the generator_fingerprints.json file.
 """
 
 import base64
+import contextlib
 import json
 import pickle
 
@@ -32,11 +33,24 @@ CARDS = [
 ]
 
 
-class Sampler(object):
+@contextlib.contextmanager
+def restore_state(generator):
+    """
+    Restore the generator state on with-block exit.
+    """
+    state = generator.getstate()
+    try:
+        yield
+    finally:
+        generator.setstate(state)
+
+
+class Fingerprinter(object):
     """
     Generator of "standard" samples, for use in reproducibility tests.
     """
 
+    # List of sample methods that will be used to create the fingerprint.
     sample_methods = [
         'bridge_hand', 'coin_tosses', 'die_rolls', 'floats',
         'shuffle', 'words'
@@ -66,13 +80,13 @@ class Sampler(object):
     def words(self):
         return [self.generator.getrandbits(32) for _ in range(20)]
 
-    def samples(self):
-        samples = {}
+    def fingerprint(self):
+        fingerprint = {}
         for method_name in self.sample_methods:
             method = getattr(self, method_name)
-            self.generator.setstate(self.state)
-            samples[method_name] = method()
-        return samples
+            with restore_state(self.generator):
+                fingerprint[method_name] = method()
+        return fingerprint
 
 
 def bytes_to_string(b):
@@ -97,9 +111,17 @@ def list_to_tuple(l):
         return l
 
 
+def tuple_to_list(l):
+    """Recursive tuple to list conversion."""
+    if isinstance(l, tuple):
+        return list(map(tuple_to_list, l))
+    else:
+        return l
+
+
 def json_fingerprint(gen):
     """
-    Return a JSON-serializable fingerprint for the given generator.
+    Return a JSON-serializable dict with data for the given generator.
     """
     # Add pickles for all supported protocols for this version
     # of Python.
@@ -112,30 +134,23 @@ def json_fingerprint(gen):
         }
         pickles.append(pickle_info)
 
-    state = gen.getstate()
-
-    samples = Sampler(gen).samples()
-
-    fingerprint = {
-        'fingerprint': samples,
+    generator_data = {
+        'fingerprint': Fingerprinter(gen).fingerprint(),
         'pickles': pickles,
-        'state': state,
+        'state': tuple_to_list(gen.getstate()),
     }
-
-    return fingerprint
-
-    return json.dumps(
-        fingerprint,
-        sort_keys=True,
-        indent=4,
-        separators=(', ', ': '),
-    )
+    return generator_data
 
 
 def write_fingerprints(generators, filename):
+    """
+    Write fingerprint data for each given generator to the given file.
+    """
     file_content = {
         'generators': [json_fingerprint(gen) for gen in generators],
     }
     with open(filename, 'w') as f:
         json.dump(file_content, f, sort_keys=True, indent=4)
+        # json.dump doesn't write a trailing newline. Not a big
+        # deal, but for a line-based file it's nice to have one.
         f.write("\n")
