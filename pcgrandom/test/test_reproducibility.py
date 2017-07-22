@@ -22,9 +22,9 @@ from pcgrandom.test.fingerprint import Sampler, string_to_bytes, list_to_tuple
 
 class TestReproducibility(unittest.TestCase):
     def test_reproducibility(self):
-        fingerprints = json.loads(
-            pkgutil.get_data(
-                'pcgrandom.test', 'data/generator_fingerprints.json'))
+        raw_data = pkgutil.get_data(
+            'pcgrandom.test', 'data/generator_fingerprints.json')
+        fingerprints = json.loads(raw_data.decode('utf8'))
 
         for generator_data in fingerprints['generators']:
             # For each pickle, we create the generator from the pickle
