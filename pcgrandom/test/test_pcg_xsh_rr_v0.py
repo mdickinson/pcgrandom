@@ -18,10 +18,10 @@ Tests for the PCG_XSH_RR_V0 generator.
 import unittest
 
 from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
-from pcgrandom.test.test_common import TestCommon
+from pcgrandom.test.test_pcg_common import TestPCGCommon
 
 
-class Test_PCG_XSH_RR_V0(TestCommon, unittest.TestCase):
+class Test_PCG_XSH_RR_V0(TestPCGCommon, unittest.TestCase):
     gen_class = PCG_XSH_RR_V0
 
     def setUp(self):
