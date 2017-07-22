@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
+from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
 from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 
 # XXX Compatibility note: from pcgrandom import * includes a few
@@ -20,7 +21,8 @@ from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 #     names.
 __all__ = [
     # Generators.
-    "PCG_XSH_RR_V0", "PCG_XSL_RR_V0",
+    "PCG_XSH_RR_V0", "PCG_XSH_RS_V0", "PCG_XSL_RR_V0",
+
     # Generator synonyms
     "PCG32", "PCG64", "Random",
 
@@ -48,7 +50,6 @@ __all__ = [
 # possibly even to different generators. In situations where reproducibility
 # matters, avoid the synonyms and use the explicit generator name.
 Random = PCG_XSH_RR_V0
-
 PCG32 = PCG_XSH_RR_V0
 PCG64 = PCG_XSL_RR_V0
 

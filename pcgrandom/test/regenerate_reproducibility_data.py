@@ -20,6 +20,7 @@ import argparse
 
 from pcgrandom.test.fingerprint import write_fingerprints
 from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
+from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
 from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
 
 # Default filename to use for output.
@@ -31,6 +32,7 @@ def generators():
     """
     return [
         PCG_XSH_RR_V0(seed=12345),
+        PCG_XSH_RS_V0(seed=90210),
         PCG_XSL_RR_V0(seed=41509),
     ]
 
