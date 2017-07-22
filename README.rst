@@ -62,12 +62,12 @@ and its methods made immediately available in ``pcgrandom``::
 
 Reproducibility guarantees
 --------------------------
-If you try the example immediately above, you'll get _exactly_ the same output
+If you try the example immediately above, you'll get *exactly* the same output
 string: ``'15183975423492044867'``, regardless of your platform, Python
 version, or ``pcgrandom`` package version.
 
 For a given concrete generator class (one of the classes listed above), an
-explicitly-seeded generator is _guaranteed_ to give the exactly same sequence
+explicitly-seeded generator is *guaranteed* to give the exactly same sequence
 of outputs, when given exactly the same sequence of calls to any of the
 ``getrandbits``, ``randint``, ``randrange``, ``choice``, ``sample`` or
 ``shuffle`` methods. This guarantee applies across platforms, supported Python
@@ -97,7 +97,7 @@ situation, not only would the ``normalvariate`` results differ, but subsequent
 calls to ``randrange`` and friends could also give completely different
 results.
 
-Note also that this guarantee does _not_ apply to the ``pcgrandom.Random``
+Note also that this guarantee does *not* apply to the ``pcgrandom.Random``
 class or to the convenience classes ``pcgrandom.PCG32`` and
 ``pcgrandom.PCG64``. These classes may be updated in future versions to point
 to fixed, updated or new core generators. If reproducibility is important to
