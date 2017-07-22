@@ -51,7 +51,3 @@ def regenerate_data_main():
         generators=generators(),
         filename=args.output,
     )
-
-
-if __name__ == '__main__':
-    regenerate_data_main()

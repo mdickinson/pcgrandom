@@ -22,7 +22,7 @@ Provides a PCG-based drop-in replacement for Python's random.Random.
 
 setup(
     name="pcgrandom",
-    version='0.0.0',
+    version="0.0.0",
     description="Random classes based on the PCG family of generators",
     long_description=long_description,
     url="https://github.com/mdickinson/pcgrandom",
@@ -49,4 +49,9 @@ setup(
     install_requires=["future"],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
     package_data={"pcgrandom.test": ["data/*.json"]},
+    entry_points={
+        "console_scripts": [
+            "pcg-test-data=pcgrandom.test.regenerate_reproducibility_data:regenerate_data_main",  # noqa: E501
+        ],
+    },
 )

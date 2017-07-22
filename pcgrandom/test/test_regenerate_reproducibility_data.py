@@ -99,13 +99,7 @@ class TestRegenerateReproducibilityData(unittest.TestCase):
     def test_write_data_with_explicit_filename_subprocess(self):
         filename = os.path.join(self.tempdir, 'fingerprints.json')
         self.assertFalse(os.path.exists(filename))
-        subprocess.check_call(
-            [
-                'python',
-                '-m', 'pcgrandom.test.regenerate_reproducibility_data',
-                '-o', filename,
-            ],
-        )
+        subprocess.check_call(['pcg-test-data', '-o', filename])
         self.assertTrue(os.path.exists(filename))
 
         # Check that it's a valid JSON file, with the expected top-level
@@ -118,13 +112,7 @@ class TestRegenerateReproducibilityData(unittest.TestCase):
     def test_write_data_no_filename_subprocess(self):
         filename = os.path.join(self.tempdir, DEFAULT_REPRODUCIBILITY_FILENAME)
         self.assertFalse(os.path.exists(filename))
-        subprocess.check_call(
-            [
-                'python',
-                '-m', 'pcgrandom.test.regenerate_reproducibility_data',
-            ],
-            cwd=self.tempdir,
-        )
+        subprocess.check_call(['pcg-test-data'], cwd=self.tempdir)
         self.assertTrue(os.path.exists(filename))
 
         # Check that it's a valid JSON file, with the expected top-level
