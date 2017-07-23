@@ -152,6 +152,17 @@ class PCGCommon(_random.Random):
                 "Empty range for randrange({0}, {1}, {2}).".format(
                     istart, istop, istep))
 
+    def randint(self, a, b):
+        """Return random integer in range [a, b], including both end points.
+        """
+        istart = _operator.index(a)
+        width = _operator.index(b) - istart + 1
+        if width > 0:
+            return istart + self._randbelow(width)
+        else:
+            raise ValueError(
+                "Empty range for randint({0}, {1}).".format(a, b))
+
     def _advance_state(self):
         """Advance the underlying LCG a single step."""
         self._state = (

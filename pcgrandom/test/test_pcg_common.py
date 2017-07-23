@@ -380,6 +380,26 @@ class TestPCGCommon(object):
         for x in xs:
             self.assertIsInstance(x, int)
 
+    def test_randint_uniform(self):
+        a, b = 10, 22
+        samples = [self.gen.randint(a, b) for _ in range(10000)]
+        self.check_uniform(range(a, b+1), samples)
+
+    def test_randint_empty_range(self):
+        with self.assertRaises(ValueError):
+            self.gen.randint(7, 6)
+        with self.assertRaises(ValueError):
+            self.gen.randint(7, 5)
+        self.assertEqual(self.gen.randint(7, 7), 7)
+
+    def test_randint_float(self):
+        with self.assertRaises(TypeError):
+            self.gen.randint(1, 2.0)
+        with self.assertRaises(TypeError):
+            self.gen.randint(1.0, 2)
+        with self.assertRaises(TypeError):
+            self.gen.randint(2.0, 2)
+
     def test_choice(self):
         with self.assertRaises(IndexError):
             self.gen.choice([])
