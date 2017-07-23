@@ -16,7 +16,6 @@ import contextlib
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -87,32 +86,6 @@ class TestRegenerateReproducibilityData(unittest.TestCase):
         with args_in_sys_argv(args):
             with cwd(self.tempdir):
                 regenerate_data_main()
-        self.assertTrue(os.path.exists(filename))
-
-        # Check that it's a valid JSON file, with the expected top-level
-        # structure.
-        with open(filename) as f:
-            contents = json.load(f)
-        self.assertIsInstance(contents, dict)
-        self.assertIn('generators', contents)
-
-    def test_write_data_with_explicit_filename_subprocess(self):
-        filename = os.path.join(self.tempdir, 'fingerprints.json')
-        self.assertFalse(os.path.exists(filename))
-        subprocess.check_call(['pcg-test-data', '-o', filename])
-        self.assertTrue(os.path.exists(filename))
-
-        # Check that it's a valid JSON file, with the expected top-level
-        # structure.
-        with open(filename) as f:
-            contents = json.load(f)
-        self.assertIsInstance(contents, dict)
-        self.assertIn('generators', contents)
-
-    def test_write_data_no_filename_subprocess(self):
-        filename = os.path.join(self.tempdir, DEFAULT_REPRODUCIBILITY_FILENAME)
-        self.assertFalse(os.path.exists(filename))
-        subprocess.check_call(['pcg-test-data'], cwd=self.tempdir)
         self.assertTrue(os.path.exists(filename))
 
         # Check that it's a valid JSON file, with the expected top-level
