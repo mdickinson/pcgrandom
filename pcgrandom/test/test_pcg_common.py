@@ -20,6 +20,7 @@ from __future__ import division
 import collections
 import itertools
 import math
+import pickle
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
 # below, indexed by degrees of freedom. Values calculated using
@@ -36,6 +37,18 @@ chisq_99percentile = {
 class TestPCGCommon(object):
     def test_version_is_unicode(self):
         self.assertIsInstance(self.gen.VERSION, type(u''))
+
+    def test_pickleability(self):
+        for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
+            pickled_gen = pickle.dumps(self.gen, protocol=protocol)
+            words = [self.gen.getrandbits(10) for _ in range(20)]
+            recovered_gen = pickle.loads(pickled_gen)
+            new_words = [recovered_gen.getrandbits(10) for _ in range(20)]
+            self.assertEqual(
+                self.gen.getstate(),
+                recovered_gen.getstate(),
+            )
+            self.assertEqual(words, new_words)
 
     def test_direct_generator_output(self):
         # Direct test of _next_output method.
