@@ -20,6 +20,7 @@ from __future__ import division
 import collections
 import itertools
 import math
+import pickle
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
 # below, indexed by degrees of freedom. Values calculated using
@@ -34,8 +35,58 @@ chisq_99percentile = {
 
 
 class TestPCGCommon(object):
+    """
+    Mixin class providing tests common to all generators in the
+    PCG family.
+    """
+    def test_creation_without_seed(self):
+        gen1 = self.gen_class()
+        gen2 = self.gen_class()
+
+        sample1 = [gen1.random() for _ in range(10)]
+        sample2 = [gen2.random() for _ in range(10)]
+
+        # Possible in theory for these two samples to be identical; vanishingly
+        # unlikely in practice.
+        self.assertNotEqual(sample1, sample2)
+
+    def test_creation_with_seed_and_sequence(self):
+        gen1 = self.gen_class(seed=12345, sequence=1)
+        gen2 = self.gen_class(12345, sequence=2)
+        # Regression test for mdickinson/pcgrandom#25.
+        gen3 = self.gen_class(12345, 1)
+        self.assertNotEqual(gen1.getstate(), gen2.getstate())
+        self.assertEqual(gen1.getrandbits(64), gen3.getrandbits(64))
+
+    def test_sequence_default(self):
+        gen = self.gen_class(seed=12345)
+        self.assertEqual(gen._increment, gen._default_increment)
+
+    def test_specification_of_multiplier(self):
+        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        for _ in range(10):
+            old_state = gen._state
+            gen._advance_state()
+            new_state = gen._state
+            self.assertEqual(
+                new_state,
+                (old_state * 5 + gen._increment) % (2**gen._state_bits)
+            )
+
     def test_version_is_unicode(self):
         self.assertIsInstance(self.gen.VERSION, type(u''))
+
+    def test_pickleability(self):
+        for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
+            pickled_gen = pickle.dumps(self.gen, protocol=protocol)
+            words = [self.gen.getrandbits(10) for _ in range(20)]
+            recovered_gen = pickle.loads(pickled_gen)
+            new_words = [recovered_gen.getrandbits(10) for _ in range(20)]
+            self.assertEqual(
+                self.gen.getstate(),
+                recovered_gen.getstate(),
+            )
+            self.assertEqual(words, new_words)
 
     def test_direct_generator_output(self):
         # Direct test of _next_output method.
@@ -67,28 +118,6 @@ class TestPCGCommon(object):
         # up to three bad counts before failing.
         self.assertLessEqual(bad_counts, 3)
 
-    def test_creation_without_seed(self):
-        gen1 = self.gen_class()
-        gen2 = self.gen_class()
-
-        sample1 = [gen1.random() for _ in range(10)]
-        sample2 = [gen2.random() for _ in range(10)]
-
-        # Possible in theory for these two samples to be identical; vanishingly
-        # unlikely in practice.
-        self.assertNotEqual(sample1, sample2)
-
-    def test_specification_of_multiplier(self):
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        for _ in range(10):
-            old_state = gen._state
-            gen._advance_state()
-            new_state = gen._state
-            self.assertEqual(
-                new_state,
-                (old_state * 5 + gen._increment) % (2**gen._state_bits)
-            )
-
     def test_state_includes_multiplier(self):
         gen = self.gen_class(seed=123, sequence=0, multiplier=5)
         state = gen.getstate()
@@ -102,10 +131,6 @@ class TestPCGCommon(object):
     def test_bad_multiplier(self):
         with self.assertRaises(ValueError):
             self.gen_class(seed=123, sequence=0, multiplier=7)
-
-    def test_sequence_default(self):
-        gen = self.gen_class(seed=12345)
-        self.assertEqual(gen._increment, gen._default_increment)
 
     def test_independent_sequences(self):
         # Crude statistical test for lack of correlation. If X and Y are

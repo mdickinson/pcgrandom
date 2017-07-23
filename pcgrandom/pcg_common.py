@@ -21,19 +21,17 @@ import bisect as _bisect
 import collections as _collections
 import operator as _operator
 import os as _os
-import random as _random
 
 from builtins import int as _int, range as _range
 
+from pcgrandom.distributions import Distributions
 
-class PCGCommon(_random.Random):
+
+class PCGCommon(Distributions):
     """
     Common base class for the PCG random generators.
     """
     def __init__(self, seed=None, sequence=None, multiplier=None):
-        self._state_mask = ~(~0 << self._state_bits)
-        self._output_previous = self._state_bits <= 64
-
         if multiplier is None:
             multiplier = self._default_multiplier
         multiplier = _operator.index(multiplier) & self._state_mask
@@ -52,6 +50,12 @@ class PCGCommon(_random.Random):
         self._multiplier = multiplier
         self._increment = increment
         self.seed(seed)
+
+    def __getstate__(self):
+        return self.getstate()
+
+    def __setstate__(self, state):
+        self.setstate(state)
 
     def seed(self, seed=None):
         """Initialize internal state from hashable object.
@@ -174,17 +178,6 @@ class PCGCommon(_random.Random):
             self._state * self._multiplier + self._increment
             & self._state_mask
         )
-
-    def _next_output(self):
-        """Return next output; advance the underlying LCG.
-        """
-        if self._output_previous:
-            output = self._get_output()
-            self._advance_state()
-        else:
-            self._advance_state()
-            output = self._get_output()
-        return output
 
     def _set_state_from_seed(self, seed):
         """Initialize generator from a given seed.
