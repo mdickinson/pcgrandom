@@ -104,9 +104,8 @@ class TestPCGCommon(object):
             self.gen_class(seed=123, sequence=0, multiplier=7)
 
     def test_sequence_default(self):
-        gen1 = self.gen_class(seed=12345, sequence=0)
-        gen2 = self.gen_class(seed=12345)
-        self.assertEqual(gen1.getstate(), gen2.getstate())
+        gen = self.gen_class(seed=12345)
+        self.assertEqual(gen._increment, gen._default_increment)
 
     def test_independent_sequences(self):
         # Crude statistical test for lack of correlation. If X and Y are

@@ -30,14 +30,19 @@ class PCGCommon(_random.Random):
     """
     Common base class for the PCG random generators.
     """
-    def __init__(self, seed=None, sequence=0, multiplier=None):
+    def __init__(self, seed=None, sequence=None, multiplier=None):
         self._state_mask = ~(~0 << self._state_bits)
+        self._output_previous = self._state_bits <= 64
 
         if multiplier is None:
             multiplier = self._default_multiplier
         multiplier = _operator.index(multiplier) & self._state_mask
-        sequence = _operator.index(sequence) & self._state_mask
-        increment = 2 * sequence + self._base_increment & self._state_mask
+
+        if sequence is None:
+            increment = self._default_increment
+        else:
+            sequence = _operator.index(sequence) & self._state_mask
+            increment = 2 * sequence + 1 & self._state_mask
 
         # The multiplier must be congruent to 1 modulo 4 to achieve
         # full period. (Hull-Dobell theorem.)
@@ -173,8 +178,12 @@ class PCGCommon(_random.Random):
     def _next_output(self):
         """Return next output; advance the underlying LCG.
         """
-        output = self._get_output()
-        self._advance_state()
+        if self._output_previous:
+            output = self._get_output()
+            self._advance_state()
+        else:
+            self._advance_state()
+            output = self._get_output()
         return output
 
     def _set_state_from_seed(self, seed):
