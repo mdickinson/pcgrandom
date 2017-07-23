@@ -33,7 +33,7 @@ class PCG_XSH_RS_V0(_PCGCommon):
     _default_multiplier = 6364136223846793005
 
     # Increment reportedly used by Knuth for the MMIX LCG.
-    _base_increment = 1442695040888963407
+    _default_increment = 1442695040888963407
 
     def _get_output(self, _mask=2**32-1):
         """Compute output from current state."""
