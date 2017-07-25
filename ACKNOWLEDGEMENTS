@@ -1,0 +1,6 @@
+- Some of the code (particularly the code for the various continuous
+  distributions, but many other smaller bits and pieces in addition to that) is
+  taken almost verbatim from Python's standard library random module; thanks go
+  to Raymond Hettinger, Tim Peters, Guido van Rossum, and the many other
+  contributors to that module.
+- Thanks to Rich Wareham for extra reproducibility testing.
