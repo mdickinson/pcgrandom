@@ -18,13 +18,20 @@ import pkgutil
 import unittest
 
 from pcgrandom.test.fingerprint import json_fingerprint, string_to_bytes
+from pcgrandom.test.regenerate_reproducibility_data import generators
 
+def load_fingerprints():
+    """Load and parse the saved generator fingerprints. Used by tests in
+    TestReproducibility.
+
+    """
+    raw_data = pkgutil.get_data(
+        'pcgrandom.test', 'data/generator_fingerprints.json')
+    return json.loads(raw_data.decode('utf8'))
 
 class TestReproducibility(unittest.TestCase):
     def test_reproducibility(self):
-        raw_data = pkgutil.get_data(
-            'pcgrandom.test', 'data/generator_fingerprints.json')
-        fingerprints = json.loads(raw_data.decode('utf8'))
+        fingerprints = load_fingerprints()
 
         for generator_data in fingerprints['generators']:
             # For each pickle, we create the generator from the pickle
@@ -55,6 +62,29 @@ class TestReproducibility(unittest.TestCase):
                     generator_data['fingerprint'],
                     computed_data['fingerprint'],
                 )
+
+    def test_reproducibility_from_identical_seeds(self):
+        # generators() constructs a list of generators using only a seed value.
+        # Two lists with differences instances but constructed with the same
+        # seeds should yield identical fingerprints.
+        generators_1, generators_2 = generators(), generators()
+
+        for g1, g2 in zip(generators_1, generators_2):
+            self.assertEqual(
+                json_fingerprint(g1)['fingerprint'],
+                json_fingerprint(g2)['fingerprint']
+            )
+
+    def test_reproducibility_from_seed_and_fingerprint(self):
+        # Generators constructed using only a seed should generate the same
+        # fingerprint as those loaded from the generator_fingerprints.json file.
+        fingerprints = load_fingerprints()
+
+        for generator, generator_data in zip(generators(), fingerprints['generators']):
+            self.assertEqual(
+                generator_data['fingerprint'],
+                json_fingerprint(generator)['fingerprint']
+            )
 
     def test_doc_reproducibility_example(self):
         # Example used in the README documentation. If for whatever reason
