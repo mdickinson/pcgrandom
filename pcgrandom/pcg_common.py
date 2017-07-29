@@ -29,7 +29,7 @@ from past.builtins import unicode as _unicode
 from pcgrandom.distributions import Distributions
 
 
-def seed_from_none(bits):
+def seed_from_system_entropy(bits):
     """
     Create a new integer seed from whatever entropy we can find.
 
@@ -133,8 +133,7 @@ class PCGCommon(Distributions):
         """Initialize internal state from hashable object.
         """
         if seed is None:
-            # XXX Better name than seed_from_none?
-            integer_seed = seed_from_none(self._state_bits)
+            integer_seed = seed_from_system_entropy(self._state_bits)
         else:
             integer_seed = seed_from_object(seed, self._state_bits)
 

@@ -23,7 +23,7 @@ import math
 import pickle
 import unittest
 
-from pcgrandom.pcg_common import seed_from_none, seed_from_object
+from pcgrandom.pcg_common import seed_from_system_entropy, seed_from_object
 
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
@@ -39,8 +39,8 @@ chisq_99percentile = {
 
 
 class TestSeedingFunctions(unittest.TestCase):
-    def test_seed_from_none_different(self):
-        seeds = [seed_from_none(bits=64) for _ in range(10)]
+    def test_seed_from_system_entropy_different(self):
+        seeds = [seed_from_system_entropy(bits=64) for _ in range(10)]
         for seed in seeds:
             self.assertEqual(seed % 2**64, seed)
         self.assertEqual(len(seeds), len(set(seeds)))
