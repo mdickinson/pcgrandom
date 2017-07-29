@@ -20,6 +20,7 @@ import unittest
 from pcgrandom.test.fingerprint import json_fingerprint, string_to_bytes
 from pcgrandom.test.regenerate_reproducibility_data import generators
 
+
 def load_fingerprints():
     """Load and parse the saved generator fingerprints. Used by tests in
     TestReproducibility.
@@ -28,6 +29,7 @@ def load_fingerprints():
     raw_data = pkgutil.get_data(
         'pcgrandom.test', 'data/generator_fingerprints.json')
     return json.loads(raw_data.decode('utf8'))
+
 
 class TestReproducibility(unittest.TestCase):
     def test_reproducibility(self):
@@ -77,10 +79,12 @@ class TestReproducibility(unittest.TestCase):
 
     def test_reproducibility_from_seed_and_fingerprint(self):
         # Generators constructed using only a seed should generate the same
-        # fingerprint as those loaded from the generator_fingerprints.json file.
+        # fingerprint as those loaded from the generator_fingerprints.json
+        # file.
         fingerprints = load_fingerprints()
 
-        for generator, generator_data in zip(generators(), fingerprints['generators']):
+        for generator, generator_data in zip(
+                generators(), fingerprints['generators']):
             self.assertEqual(
                 generator_data['fingerprint'],
                 json_fingerprint(generator)['fingerprint']
