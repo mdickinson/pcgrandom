@@ -137,11 +137,11 @@ There are some minor differences between the standard library ``Random`` class
 and the classes provided by ``pcgrandom``. Here we summarise the differences.
 
 - While the ``Random`` class permits seeding from an arbitrary hashable object,
-  the ``pcgrandom`` classes may only be seeded from integers. Allowing
-  arbitrary hashable objects makes it harder to guarantee reproducibility if
-  Python's hashing algorithm changes. See https://bugs.python.org/issue27706
-  for an example of issues caused by this in the past. We may allow seeding
-  from strings at some point in the future.
+  the ``pcgrandom`` classes may only be seeded from integers and strings
+  (bytestrings or Unicode strings). Allowing arbitrary hashable objects makes
+  it harder to guarantee reproducibility in the event of Python's hashing
+  algorithms changing. See https://bugs.python.org/issue27706 for an example of
+  issues caused by this in the past.
 
 - The ``getrandbits`` method accepts an input of ``0``, returning ``0``
   (the unique integer in the range ``[0, 2**0)``). In ``random.Random``,
