@@ -19,12 +19,84 @@ from __future__ import division
 
 import bisect as _bisect
 import collections as _collections
+import hashlib as _hashlib
 import operator as _operator
 import os as _os
 
 from builtins import int as _int, range as _range
+from past.builtins import unicode as _unicode
 
 from pcgrandom.distributions import Distributions
+
+
+def seed_from_none(bits):
+    """
+    Create a new integer seed from whatever entropy we can find.
+
+    Parameters
+    ----------
+    bits : nonnegative integer
+        Number of bits we need.
+
+    Returns
+    -------
+    seed : integer
+        Integer seed in the range 0 <= seed < 2**bits.
+    """
+    numbytes, excess = -(-bits // 8), -bits % 8
+    seed = _int.from_bytes(_os.urandom(numbytes), byteorder="big")
+    return seed >> excess
+
+
+def seed_from_object(obj, bits):
+    """
+    Create a new integer seed from the given Python object, in
+    a reproducible manner.
+
+    Parameters
+    ----------
+    obj : Object
+        The object to use to create the seed.
+    bits : nonnegative integer.
+        Number of bits needed for the seed. This function can produce
+        a maximum of 512 bits from a Unicode or string object.
+
+    Returns
+    -------
+    seed : integer
+        Integer seed in the range 0 <= seed < 2**bits.
+    """
+    # From an integer-like.
+    try:
+        obj_as_integer = _operator.index(obj)
+    except TypeError:
+        pass
+    else:
+        seed_mask = ~(~0 << bits)
+        seed = obj_as_integer & seed_mask
+        return seed
+
+    # For a Unicode or byte string.
+    if isinstance(obj, _unicode):
+        obj = obj.encode('utf8')
+
+    if isinstance(obj, bytes):
+        obj_hash = _hashlib.sha512(obj).digest()
+        numbytes, excess = -(-bits // 8), -bits % 8
+
+        if numbytes > len(obj_hash):
+            raise ValueError(
+                "Cannot provide more than {} bits of seed.".format(
+                    8 * len(obj_hash)))
+
+        seed = _int.from_bytes(obj_hash[:numbytes], byteorder="big") >> excess
+        return seed
+
+    raise TypeError(
+        "Unable to create seed from object of type {}. "
+        "Please use an integer, bytestring or Unicode string.".format(
+            type(obj))
+    )
 
 
 class PCGCommon(Distributions):
@@ -61,12 +133,12 @@ class PCGCommon(Distributions):
         """Initialize internal state from hashable object.
         """
         if seed is None:
-            nbytes = self._state_bits // 8
-            seed = _int.from_bytes(_os.urandom(nbytes), byteorder="little")
+            # XXX Better name than seed_from_none?
+            integer_seed = seed_from_none(self._state_bits)
         else:
-            seed = _operator.index(seed)
+            integer_seed = seed_from_object(seed, self._state_bits)
 
-        self._set_state_from_seed(seed)
+        self._set_state_from_seed(integer_seed)
         self.gauss_next = None
 
     def getstate(self):
