@@ -18,15 +18,12 @@ Mixin class providing various distributions.
 # The methods in this class are copied almost verbatim from Python's random
 # module.
 
-from math import (
-    acos as _acos, cos as _cos, e as _e, exp as _exp, log as _log, pi as _pi,
-    sin as _sin, sqrt as _sqrt
-)
+from math import acos, cos, e, exp, log, pi, sin, sqrt
 
-NV_MAGICCONST = 4 * _exp(-0.5)/_sqrt(2.0)
-TWOPI = 2.0*_pi
-LOG4 = _log(4.0)
-SG_MAGICCONST = 1.0 + _log(4.5)
+NV_MAGICCONST = 4 * exp(-0.5)/sqrt(2.0)
+TWOPI = 2.0*pi
+LOG4 = log(4.0)
+SG_MAGICCONST = 1.0 + log(4.5)
 
 
 class Distributions(object):
@@ -78,7 +75,7 @@ class Distributions(object):
             u2 = 1.0 - random()
             z = NV_MAGICCONST*(u1-0.5)/u2
             zz = z*z/4.0
-            if zz <= -_log(u2):
+            if zz <= -log(u2):
                 break
         return mu + z*sigma
 
@@ -90,7 +87,7 @@ class Distributions(object):
         mu can have any value, and sigma must be greater than zero.
 
         """
-        return _exp(self.normalvariate(mu, sigma))
+        return exp(self.normalvariate(mu, sigma))
 
     def expovariate(self, lambd):
         """Exponential distribution.
@@ -107,7 +104,7 @@ class Distributions(object):
 
         # we use 1-random() instead of random() to preclude the
         # possibility of taking the log of zero.
-        return -_log(1.0 - self.random())/lambd
+        return -log(1.0 - self.random())/lambd
 
     def vonmisesvariate(self, mu, kappa):
         """Circular data distribution.
@@ -134,24 +131,24 @@ class Distributions(object):
             return TWOPI * random()
 
         s = 0.5 / kappa
-        r = s + _sqrt(1.0 + s * s)
+        r = s + sqrt(1.0 + s * s)
 
         while 1:
             u1 = random()
-            z = _cos(_pi * u1)
+            z = cos(pi * u1)
 
             d = z / (r + z)
             u2 = random()
-            if u2 < 1.0 - d * d or u2 <= (1.0 - d) * _exp(d):
+            if u2 < 1.0 - d * d or u2 <= (1.0 - d) * exp(d):
                 break
 
         q = 1.0 / r
         f = (q + z) / (1.0 + q * z)
         u3 = random()
         if u3 > 0.5:
-            theta = (mu + _acos(f)) % TWOPI
+            theta = (mu + acos(f)) % TWOPI
         else:
-            theta = (mu - _acos(f)) % TWOPI
+            theta = (mu - acos(f)) % TWOPI
 
         return theta
 
@@ -182,7 +179,7 @@ class Distributions(object):
             # variables with non-integral shape parameters",
             # Applied Statistics, (1977), 26, No. 1, p71-74
 
-            ainv = _sqrt(2.0 * alpha - 1.0)
+            ainv = sqrt(2.0 * alpha - 1.0)
             bbb = alpha - LOG4
             ccc = alpha + ainv
 
@@ -191,11 +188,11 @@ class Distributions(object):
                 if not 1e-7 < u1 < .9999999:
                     continue
                 u2 = 1.0 - random()
-                v = _log(u1/(1.0-u1))/ainv
-                x = alpha*_exp(v)
+                v = log(u1/(1.0-u1))/ainv
+                x = alpha*exp(v)
                 z = u1*u1*u2
                 r = bbb+ccc*v-x
-                if r + SG_MAGICCONST - 4.5*z >= 0.0 or r >= _log(z):
+                if r + SG_MAGICCONST - 4.5*z >= 0.0 or r >= log(z):
                     return x * beta
 
         elif alpha == 1.0:
@@ -203,7 +200,7 @@ class Distributions(object):
             u = random()
             while u <= 1e-7:
                 u = random()
-            return -_log(u) * beta
+            return -log(u) * beta
 
         else:   # alpha is between 0 and 1 (exclusive)
 
@@ -211,17 +208,17 @@ class Distributions(object):
 
             while 1:
                 u = random()
-                b = (_e + alpha)/_e
+                b = (e + alpha)/e
                 p = b*u
                 if p <= 1.0:
                     x = p ** (1.0/alpha)
                 else:
-                    x = -_log((b-p)/alpha)
+                    x = -log((b-p)/alpha)
                 u1 = random()
                 if p > 1.0:
                     if u1 <= x ** (alpha - 1.0):
                         break
-                elif u1 <= _exp(-x):
+                elif u1 <= exp(-x):
                     break
             return x * beta
 
@@ -258,9 +255,9 @@ class Distributions(object):
         self.gauss_next = None
         if z is None:
             x2pi = random() * TWOPI
-            g2rad = _sqrt(-2.0 * _log(1.0 - random()))
-            z = _cos(x2pi) * g2rad
-            self.gauss_next = _sin(x2pi) * g2rad
+            g2rad = sqrt(-2.0 * log(1.0 - random()))
+            z = cos(x2pi) * g2rad
+            self.gauss_next = sin(x2pi) * g2rad
 
         return mu + z*sigma
 
@@ -296,4 +293,4 @@ class Distributions(object):
         # Jain, pg. 499; bug fix courtesy Bill Arms
 
         u = 1.0 - self.random()
-        return alpha * (-_log(u)) ** (1.0/beta)
+        return alpha * (-log(u)) ** (1.0/beta)

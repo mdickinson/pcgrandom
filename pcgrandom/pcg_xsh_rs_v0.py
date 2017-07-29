@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pcgrandom.pcg_common import PCGCommon as _PCGCommon
+from pcgrandom.pcg_common import PCGCommon
 
 
-class PCG_XSH_RS_V0(_PCGCommon):
+class PCG_XSH_RS_V0(PCGCommon):
     """
     Random subclass based on Melissa O'Neill's PCG family.
 

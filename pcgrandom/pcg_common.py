@@ -17,14 +17,15 @@ Common base class for the various PCG implementations.
 """
 from __future__ import division
 
-import bisect as _bisect
-import collections as _collections
-import hashlib as _hashlib
-import operator as _operator
-import os as _os
+import bisect
+import collections
+import hashlib
+import operator
+import os
 
-from builtins import int as _int, range as _range
-from past.builtins import unicode as _unicode
+# Python 2 compatibility.
+from builtins import int as _int, range
+from past.builtins import unicode
 
 from pcgrandom.distributions import Distributions
 
@@ -44,7 +45,7 @@ def seed_from_system_entropy(bits):
         Integer seed in the range 0 <= seed < 2**bits.
     """
     numbytes, excess = -(-bits // 8), -bits % 8
-    seed = _int.from_bytes(_os.urandom(numbytes), byteorder="big")
+    seed = _int.from_bytes(os.urandom(numbytes), byteorder="big")
     return seed >> excess
 
 
@@ -68,7 +69,7 @@ def seed_from_object(obj, bits):
     """
     # From an integer-like.
     try:
-        obj_as_integer = _operator.index(obj)
+        obj_as_integer = operator.index(obj)
     except TypeError:
         pass
     else:
@@ -77,11 +78,11 @@ def seed_from_object(obj, bits):
         return seed
 
     # For a Unicode or byte string.
-    if isinstance(obj, _unicode):
+    if isinstance(obj, unicode):
         obj = obj.encode('utf8')
 
     if isinstance(obj, bytes):
-        obj_hash = _hashlib.sha512(obj).digest()
+        obj_hash = hashlib.sha512(obj).digest()
         numbytes, excess = -(-bits // 8), -bits % 8
 
         if numbytes > len(obj_hash):
@@ -106,12 +107,12 @@ class PCGCommon(Distributions):
     def __init__(self, seed=None, sequence=None, multiplier=None):
         if multiplier is None:
             multiplier = self._default_multiplier
-        multiplier = _operator.index(multiplier) & self._state_mask
+        multiplier = operator.index(multiplier) & self._state_mask
 
         if sequence is None:
             increment = self._default_increment
         else:
-            sequence = _operator.index(sequence) & self._state_mask
+            sequence = operator.index(sequence) & self._state_mask
             increment = 2 * sequence + 1 & self._state_mask
 
         # The multiplier must be congruent to 1 modulo 4 to achieve
@@ -167,7 +168,7 @@ class PCGCommon(Distributions):
         k : nonnegative integer
 
         """
-        k = _operator.index(k)
+        k = operator.index(k)
         if k < 0:
             raise ValueError("Number of bits should be nonnegative.")
 
@@ -175,7 +176,7 @@ class PCGCommon(Distributions):
 
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0
-        for _ in _range(numwords):
+        for _ in range(numwords):
             acc = acc << output_bits | self._next_output()
         # int call converts small longs to ints on Python 2.
         return int(acc >> excess_bits)
@@ -203,7 +204,7 @@ class PCGCommon(Distributions):
         # Reimplemented from the base class to ensure reproducibility
         # across Python versions. The code below is adapted from that
         # in Python 3.6.
-        istart = _operator.index(start)
+        istart = operator.index(start)
         if stop is None:
             if istart > 0:
                 return self._randbelow(istart)
@@ -211,7 +212,7 @@ class PCGCommon(Distributions):
                 raise ValueError(
                     "Empty range for randrange({0}).".format(istart))
 
-        istop = _operator.index(stop)
+        istop = operator.index(stop)
         width = istop - istart
         if step is None:
             if width > 0:
@@ -221,7 +222,7 @@ class PCGCommon(Distributions):
                     "Empty range for randrange({0}, {1}).".format(
                         istart, istop))
 
-        istep = _operator.index(step)
+        istep = operator.index(step)
         if istep == 0:
             raise ValueError("Zero step for randrange().")
         n = -(-width // istep)
@@ -235,8 +236,8 @@ class PCGCommon(Distributions):
     def randint(self, a, b):
         """Return random integer in range [a, b], including both end points.
         """
-        istart = _operator.index(a)
-        width = _operator.index(b) - istart + 1
+        istart = operator.index(a)
+        width = operator.index(b) - istart + 1
         if width > 0:
             return istart + self._randbelow(width)
         else:
@@ -295,7 +296,7 @@ class PCGCommon(Distributions):
     def shuffle(self, x):
         """Shuffle list x in place, and return None."""
         n = len(x)
-        for i in reversed(_range(n)):
+        for i in reversed(range(n)):
             j = i + self._randbelow(n - i)
             if j > i:
                 x[i], x[j] = x[j], x[i]
@@ -317,9 +318,9 @@ class PCGCommon(Distributions):
         This is especially fast and space efficient for sampling from a
         large population:   sample(range(10000000), 60)
         """
-        if isinstance(population, _collections.Set):
+        if isinstance(population, collections.Set):
             population = tuple(population)
-        if not isinstance(population, _collections.Sequence):
+        if not isinstance(population, collections.Sequence):
             raise TypeError(
                 "Population must be a sequence or set.  "
                 "For dicts, use list(d).")
@@ -333,7 +334,7 @@ class PCGCommon(Distributions):
         # python-list dated May 28th 2010, entitled "A Friday Python
         # Programming Pearl: random sampling".
         d = {}
-        for i in reversed(_range(k)):
+        for i in reversed(range(k)):
             j = i + self._randbelow(n - i)
             if j in d:
                 d[i] = d[j]
@@ -360,7 +361,7 @@ class PCGCommon(Distributions):
             if weights is None:
                 if len(population) == 0:
                     raise IndexError("Cannot choose from an empty population.")
-                return [self.choice(population) for _ in _range(k)]
+                return [self.choice(population) for _ in range(k)]
             cum_weights, acc = [], 0
             for weight in weights:
                 acc += weight
@@ -386,6 +387,6 @@ class PCGCommon(Distributions):
         # less than 1.0, and bisectors[-1] == 1.0, so the result of the bisect
         # call should always be strictly smaller than len(population).
         return [
-            population[_bisect.bisect(bisectors, self.random())]
+            population[bisect.bisect(bisectors, self.random())]
             for _ in range(k)
         ]

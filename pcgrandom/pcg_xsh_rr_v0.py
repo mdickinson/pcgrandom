@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pcgrandom.pcg_common import PCGCommon as _PCGCommon
+from pcgrandom.pcg_common import PCGCommon
 
 
 def _rotate32(v, r, _multiplier=2**32 + 1, _mask=2**32 - 1):
@@ -39,7 +39,7 @@ def _rotate32(v, r, _multiplier=2**32 + 1, _mask=2**32 - 1):
     return (v & _mask) * _multiplier >> r & _mask
 
 
-class PCG_XSH_RR_V0(_PCGCommon):
+class PCG_XSH_RR_V0(PCGCommon):
     """
     Random subclass based on Melissa O'Neill's PCG family.
 
