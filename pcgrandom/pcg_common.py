@@ -56,7 +56,7 @@ def seed_from_object(obj, bits):
 
     Parameters
     ----------
-    obj : Object
+    obj : object
         The object to use to create the seed.
     bits : nonnegative integer.
         Number of bits needed for the seed. This function can produce
