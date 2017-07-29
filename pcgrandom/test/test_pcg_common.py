@@ -21,6 +21,10 @@ import collections
 import itertools
 import math
 import pickle
+import unittest
+
+from pcgrandom.pcg_common import seed_from_system_entropy, seed_from_object
+
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
 # below, indexed by degrees of freedom. Values calculated using
@@ -32,6 +36,25 @@ chisq_99percentile = {
     23: 41.63839811885848,
     31: 52.19139483319192,
 }
+
+
+class TestSeedingFunctions(unittest.TestCase):
+    def test_seed_from_system_entropy_different(self):
+        seeds = [seed_from_system_entropy(bits=64) for _ in range(10)]
+        for seed in seeds:
+            self.assertEqual(seed % 2**64, seed)
+        self.assertEqual(len(seeds), len(set(seeds)))
+
+    def test_seed_from_object_large_bits(self):
+        with self.assertRaises(ValueError):
+            seed_from_object("some string or other", 513)
+        seed = seed_from_object("some string or other", 512)
+        self.assertGreater(seed.bit_length(), 500)
+        self.assertLessEqual(seed.bit_length(), 512)
+
+    def test_seed_from_object_bad_object_type(self):
+        with self.assertRaises(TypeError):
+            seed_from_object(3.4, 32)
 
 
 class TestPCGCommon(object):
@@ -57,6 +80,18 @@ class TestPCGCommon(object):
         gen3 = self.gen_class(12345, 1)
         self.assertNotEqual(gen1.getstate(), gen2.getstate())
         self.assertEqual(gen1.getrandbits(64), gen3.getrandbits(64))
+
+    def test_seed_from_integer(self):
+        gen1 = self.gen_class(seed=17289)
+        gen2 = self.gen_class(seed=17289 + 2**self.gen_class._state_bits)
+        gen3 = self.gen_class(seed=17289 - 2**self.gen_class._state_bits)
+        self.assertEqual(gen1.getstate(), gen2.getstate())
+        self.assertEqual(gen1.getstate(), gen3.getstate())
+
+    def test_seed_from_bytes_and_unicode(self):
+        gen1 = self.gen_class(seed=b"your mother was a hamster")
+        gen2 = self.gen_class(seed=u"your mother was a hamster")
+        self.assertEqual(gen1.getstate(), gen2.getstate())
 
     def test_sequence_default(self):
         gen = self.gen_class(seed=12345)
