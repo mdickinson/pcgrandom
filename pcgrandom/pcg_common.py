@@ -45,7 +45,7 @@ def seed_from_system_entropy(bits):
         Integer seed in the range 0 <= seed < 2**bits.
     """
     numbytes, excess = -(-bits // 8), -bits % 8
-    seed = _int.from_bytes(_os.urandom(numbytes), byteorder="big")
+    seed = _int.from_bytes(os.urandom(numbytes), byteorder="big")
     return seed >> excess
 
 
@@ -69,7 +69,7 @@ def seed_from_object(obj, bits):
     """
     # From an integer-like.
     try:
-        obj_as_integer = _operator.index(obj)
+        obj_as_integer = operator.index(obj)
     except TypeError:
         pass
     else:
