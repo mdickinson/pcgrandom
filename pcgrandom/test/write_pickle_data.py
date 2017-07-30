@@ -206,5 +206,5 @@ def write_pickle_data():
     AllGeneratorsPickles.from_generators(generators()).dump(args.output)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     write_pickle_data()

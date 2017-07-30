@@ -24,19 +24,6 @@ from pcgrandom.test.regenerate_reproducibility_data import (
 from pcgrandom.test.testing_utils import args_in_sys_argv
 
 
-@contextlib.contextmanager
-def cwd(dir):
-    """
-    Temporarily change the current working directory.
-    """
-    old_cwd = os.getcwd()
-    os.chdir(dir)
-    try:
-        yield
-    finally:
-        os.chdir(old_cwd)
-
-
 class TestRegenerateReproducibilityData(unittest.TestCase):
     """
     Yes, this is a test for a test utility.
