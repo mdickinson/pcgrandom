@@ -200,7 +200,7 @@ def write_pickle_data():
     )
     parser.add_argument(
         "output",
-        help="Output path to write the data to (default: %(default)r).",
+        help="Output path to write the generated data to.",
     )
     args = parser.parse_args()
     AllGeneratorsPickles.from_generators(generators()).dump(args.output)

@@ -52,9 +52,4 @@ setup(
             "data/*.txt",
         ],
     },
-    entry_points={
-        "console_scripts": [
-            "pcg-test-data=pcgrandom.test.regenerate_reproducibility_data:regenerate_data_main",  # noqa: E501
-        ],
-    },
 )

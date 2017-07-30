@@ -19,11 +19,19 @@ tests.
 
 """
 import argparse
+import os
+import pkgutil
 
 from pcgrandom.test.fingerprint import write_fingerprints
 
-# Default filename to use for output.
-DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
+
+# Path to data file.
+def reproducibility_filename():
+    test_package_name = 'pcgrandom.test'
+    test_package = pkgutil.get_loader(test_package_name).load_module(
+        test_package_name)
+    data_dir = os.path.join(os.path.dirname(test_package.__file__), 'data')
+    return os.path.join(data_dir, 'generator_fingerprints.json')
 
 
 # Generators used in reproducibility tests; short versions. Each
@@ -55,9 +63,8 @@ def regenerate_data_main():
         description="Regenerate reproducibility data.",
     )
     parser.add_argument(
-        "-o", "--output",
-        default=DEFAULT_REPRODUCIBILITY_FILENAME,
-        help="Output path to write the data to (default: %(default)r).",
+        "output",
+        help="Output path to write the generated data to.",
     )
 
     args = parser.parse_args()
@@ -66,3 +73,7 @@ def regenerate_data_main():
         constructors=constructors(),
         filename=args.output,
     )
+
+
+if __name__ == '__main__':
+    regenerate_data_main()

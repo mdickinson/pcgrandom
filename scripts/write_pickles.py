@@ -28,9 +28,9 @@ EXECUTABLES = {
 }
 
 
-def main():
+def write_pickle_data():
     """
-    Regenerate pickle test data for all Python versions.
+    Rewrite pickle test data for all Python versions.
     """
     from pcgrandom.test.write_pickle_data import pickle_filenames
 
@@ -42,6 +42,30 @@ def main():
             pickle_filename,
         ]
         subprocess.check_call(cmd)
+
+
+def write_reproducibility_data():
+    """
+    Rewrite reproducibility data.
+    """
+    from pcgrandom.test.regenerate_reproducibility_data import (
+        reproducibility_filename)
+
+    python_executable = EXECUTABLES['python3']
+    cmd = [
+        python_executable,
+        '-m', 'pcgrandom.test.regenerate_reproducibility_data',
+        reproducibility_filename(),
+    ]
+    subprocess.check_call(cmd)
+
+
+def main():
+    """
+    Regenerate test data for all Python versions.
+    """
+    write_pickle_data()
+    write_reproducibility_data()
 
 
 if __name__ == '__main__':

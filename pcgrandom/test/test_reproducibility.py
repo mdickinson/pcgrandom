@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import json
-import pkgutil
 import unittest
 
 from pcgrandom.test.fingerprint import json_fingerprint
+from pcgrandom.test.regenerate_reproducibility_data import (
+    reproducibility_filename)
 
 
 def load_fingerprints():
@@ -24,9 +25,9 @@ def load_fingerprints():
     TestReproducibility.
 
     """
-    raw_data = pkgutil.get_data(
-        'pcgrandom.test', 'data/generator_fingerprints.json')
-    return json.loads(raw_data.decode('utf-8'))
+    filename = reproducibility_filename()
+    with open(filename) as f:
+        return json.load(f)
 
 
 class TestReproducibility(unittest.TestCase):
