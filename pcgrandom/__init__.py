@@ -23,6 +23,9 @@ __all__ = [
     # Generator synonyms
     "PCG32", "PCG64", "Random",
 
+    # List of all generators (not including synonyms).
+    "pcg_generators",
+
     # Methods related to the internal state.
     "getstate", "jumpahead", "seed", "setstate",
 
@@ -38,6 +41,9 @@ __all__ = [
     "vonmisesvariate", "weibullvariate",
 
 ]
+
+# List of all available generators; mostly used in testing.
+pcg_generators = [PCG_XSH_RR_V0, PCG_XSH_RS_V0, PCG_XSL_RR_V0]
 
 # Allow users to do 'from pcgrandom import Random', to mimic standard library
 # 'random' module. Note that this may change with releases, so if
