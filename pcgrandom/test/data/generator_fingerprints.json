@@ -1,12 +1,7 @@
 {
     "generators": [
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": 12345
-                },
-                "version": "pcgrandom.PCG_XSH_RR_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSH_RR_V0(seed=12345)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -227,13 +222,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": 12345,
-                    "sequence": 24
-                },
-                "version": "pcgrandom.PCG_XSH_RR_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSH_RR_V0(seed=12345, sequence=24)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -454,12 +443,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": "noodleloaf"
-                },
-                "version": "pcgrandom.PCG_XSH_RR_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSH_RR_V0(seed=u\"noodleloaf\")\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -680,12 +664,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": 90210
-                },
-                "version": "pcgrandom.PCG_XSH_RS_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSH_RS_V0(seed=90210)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -906,13 +885,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": "\u03a4\u03bf \u03b1\u03b5\u03c1\u03bf\u03c3\u03c4\u03c1\u03c9\u03bc\u03b1\u03c4\u03cc\u03c7\u03b7\u03bc\u03ac \u03bc\u03bf\u03c5 \u03b5\u03af\u03bd\u03b1\u03b9 \u03b3\u03b5\u03bc\u03ac\u03c4\u03bf \u03c7\u03ad\u03bb\u03b9\u03b1",
-                    "sequence": -7
-                },
-                "version": "pcgrandom.PCG_XSH_RS_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSH_RS_V0(seed=u\"\u03a4\u03bf \u03b1\u03b5\u03c1\u03bf\u03c3\u03c4\u03c1\u03c9\u03bc\u03b1\u03c4\u03cc\u03c7\u03b7\u03bc\u03ac \u03bc\u03bf\u03c5 \u03b5\u03af\u03bd\u03b1\u03b9 \u03b3\u03b5\u03bc\u03ac\u03c4\u03bf \u03c7\u03ad\u03bb\u03b9\u03b1\", sequence=-7)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -1133,12 +1106,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": 41509
-                },
-                "version": "pcgrandom.PCG_XSL_RR_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSL_RR_V0(seed=41509)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -1359,13 +1327,7 @@
             ]
         },
         {
-            "constructor": {
-                "kwargs": {
-                    "seed": -3,
-                    "sequence": 340282366920938463463374607431768211493
-                },
-                "version": "pcgrandom.PCG_XSL_RR_V0"
-            },
+            "constructor": "import pcgrandom\ngenerator = pcgrandom.PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)\n",
             "fingerprint": {
                 "bridge_hand": [
                     [

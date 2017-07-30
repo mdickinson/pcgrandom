@@ -26,27 +26,28 @@ from pcgrandom.test.fingerprint import write_fingerprints
 DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
 
 
-# Generators
-generator_creators = [
-    ('pcgrandom.PCG_XSH_RR_V0', {'seed': 12345}),
-    ('pcgrandom.PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 24}),
-    ('pcgrandom.PCG_XSH_RR_V0', {'seed': u"noodleloaf"}),
-
-    ('pcgrandom.PCG_XSH_RS_V0', {'seed': 90210}),
-    ('pcgrandom.PCG_XSH_RS_V0',
-     {'seed': u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια", 'sequence': -7}),
-
-    ('pcgrandom.PCG_XSL_RR_V0', {'seed': 41509}),
-    ('pcgrandom.PCG_XSL_RR_V0', {'seed': -3, 'sequence': 2**128 + 37}),
+# Generators used in reproducibility tests; short versions. Each
+# of these strings is expanded into something exec-able.
+_short_constructors = [
+    "PCG_XSH_RR_V0(seed=12345)",
+    "PCG_XSH_RR_V0(seed=12345, sequence=24)",
+    "PCG_XSH_RR_V0(seed=u\"noodleloaf\")",
+    "PCG_XSH_RS_V0(seed=90210)",
+    (
+        "PCG_XSH_RS_V0(seed=u\"Το αεροστρωματόχημά μου "
+        "είναι γεμάτο χέλια\", sequence=-7)"
+    ),
+    "PCG_XSL_RR_V0(seed=41509)",
+    "PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)",
 ]
 
 
 def constructors():
-    for version, kwargs in generator_creators:
-        yield {
-            'version': version,
-            'kwargs': kwargs,
-        }
+    for short_constructor in _short_constructors:
+        yield """\
+import pcgrandom
+generator = pcgrandom.{short_constructor}
+""".format(short_constructor=short_constructor)
 
 
 def regenerate_data_main():

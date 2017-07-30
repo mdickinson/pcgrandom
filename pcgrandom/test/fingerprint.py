@@ -43,8 +43,9 @@ generator_class = {
 def construct_generator(constructor):
     """Construct generator from JSON-serializable construction information.
     """
-    version, kwargs = constructor['version'], constructor['kwargs']
-    return generator_class[version](**kwargs)
+    localvars = {}
+    exec(constructor, localvars)
+    return localvars['generator']
 
 
 @contextlib.contextmanager
