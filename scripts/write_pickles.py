@@ -5,8 +5,10 @@ import os
 import pkgutil
 import subprocess
 
+from pcgrandom.test.write_pickle_data import json_filenames
+
 # Dictionary mapping python version id to executable paths on this system.
-PYTHON_VERSIONS = {
+EXECUTABLES = {
     'python2': 'python2',
     'python3': 'python',
     'pypy2': 'pypy',
@@ -30,9 +32,9 @@ def main():
     Regenerate pickle test data on a particular Python version.
     """
     data_dir = test_data_directory()
-    for version_id, python_executable in PYTHON_VERSIONS.items():
-        output_filename = os.path.join(
-            data_dir, 'pickles-{}.json'.format(version_id))
+    for version_id, json_filename in json_filenames().items():
+        python_executable = EXECUTABLES[version_id]
+        output_filename = os.path.join(data_dir, json_filename)
         cmd = [
             python_executable,
             '-m', 'pcgrandom.test.write_pickle_data',

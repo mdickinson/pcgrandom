@@ -11,13 +11,7 @@ import pickle
 import pkgutil
 import unittest
 
-
-DATA_FILES = [
-    'pickles-python2.json',
-    'pickles-python3.json',
-    'pickles-pypy2.json',
-    'pickles-pypy3.json',
-]
+from pcgrandom.test.write_pickle_data import json_filenames
 
 
 def load_pickle_data(filename):
@@ -44,7 +38,7 @@ def tuple_to_list(l):
 
 class TestUnpickling(unittest.TestCase):
     def test_unpickling(self):
-        for filename in DATA_FILES:
+        for version, filename in json_filenames().items():
             all_pickle_data = load_pickle_data(filename)
             for generator_data in all_pickle_data['generators']:
                 state = generator_data['state']

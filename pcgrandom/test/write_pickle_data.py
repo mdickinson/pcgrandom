@@ -12,6 +12,21 @@ from pcgrandom import pcg_generators
 DEFAULT_OUTPUT = "pickles_python3.json"
 
 
+def json_filenames():
+    """
+    JSON filenames to write to, keyed by Python version.
+
+    Returns
+    -------
+    Mapping from Python version identifiers to output filenames.
+    """
+    versions = ['python2', 'python3', 'pypy2', 'pypy3']
+    return {
+        version: 'pickles-{}.json'.format(version)
+        for version in versions
+    }
+
+
 def available_protocols():
     """
     Available Pickle protocols for this version of Python.
