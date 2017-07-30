@@ -9,8 +9,6 @@ import pickle
 
 from pcgrandom import pcg_generators
 
-DEFAULT_OUTPUT = "pickles_python3.json"
-
 
 def json_filenames():
     """
@@ -97,8 +95,7 @@ def write_pickle_data():
         description="Regenerate pickle data.",
     )
     parser.add_argument(
-        "-o", "--output",
-        default=DEFAULT_OUTPUT,
+        "output",
         help="Output path to write the data to (default: %(default)r).",
     )
 

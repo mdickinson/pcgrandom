@@ -38,7 +38,7 @@ def main():
         cmd = [
             python_executable,
             '-m', 'pcgrandom.test.write_pickle_data',
-            '--output', output_filename,
+            output_filename,
         ]
         subprocess.check_call(cmd)
 
