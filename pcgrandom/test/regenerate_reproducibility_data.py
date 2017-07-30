@@ -36,26 +36,23 @@ def reproducibility_filename():
 
 # Generators used in reproducibility tests; short versions. Each
 # of these strings is expanded into something exec-able.
-_short_constructors = [
-    "PCG_XSH_RR_V0(seed=12345)",
-    "PCG_XSH_RR_V0(seed=12345, sequence=24)",
-    "PCG_XSH_RR_V0(seed=u\"noodleloaf\")",
-    "PCG_XSH_RS_V0(seed=90210)",
-    (
-        "PCG_XSH_RS_V0(seed=u\"Το αεροστρωματόχημά μου "
-        "είναι γεμάτο χέλια\", sequence=-7)"
-    ),
-    "PCG_XSL_RR_V0(seed=41509)",
-    "PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)",
-    "PCG_XSL_RR_V0(seed=b\"i am \\x01 a byte \\x00\\xff string\")",
-]
+_short_constructors = r"""
+pcgrandom.PCG_XSH_RR_V0(seed=12345)
+pcgrandom.PCG_XSH_RR_V0(seed=12345, sequence=24)
+pcgrandom.PCG_XSH_RR_V0(seed=u"noodleloaf")
+pcgrandom.PCG_XSH_RS_V0(seed=90210, sequence=-7)
+pcgrandom.PCG_XSH_RS_V0(seed=u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια")
+pcgrandom.PCG_XSL_RR_V0(seed=41509)
+pcgrandom.PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)
+pcgrandom.PCG_XSL_RR_V0(seed=b"i am \x01 a byte \x00\xff string")
+"""[1:].splitlines()
 
 
 def constructors():
     for short_constructor in _short_constructors:
         yield """\
 import pcgrandom
-generator = pcgrandom.{short_constructor}
+generator = {short_constructor}
 """.format(short_constructor=short_constructor)
 
 

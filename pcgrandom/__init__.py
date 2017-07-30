@@ -67,6 +67,7 @@ pcg_generators = [
 # (both in the user's code and in the Python libraries), but that's fine
 # for most programs and is easier for the casual user than making them
 # instantiate their own Random() instance.
+
 _inst = Random()
 
 seed = _inst.seed
