@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright 2017 Mark Dickinson
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,23 +20,24 @@ tests.
 """
 import argparse
 
-from pcgrandom.test.fingerprint import (
-    construct_generator, write_fingerprints)
+from pcgrandom.test.fingerprint import write_fingerprints
 
 # Default filename to use for output.
 DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
 
 
-# Seeding tests.
+# Generators
 generator_creators = [
     ('pcgrandom.PCG_XSH_RR_V0', {'seed': 12345}),
-    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 0}),
-    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 24}),
-    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': -67}),
-    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 1132948199097681250173}),
+    ('pcgrandom.PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 24}),
+    ('pcgrandom.PCG_XSH_RR_V0', {'seed': u"noodleloaf"}),
 
     ('pcgrandom.PCG_XSH_RS_V0', {'seed': 90210}),
+    ('pcgrandom.PCG_XSH_RS_V0',
+     {'seed': u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια", 'sequence': -7}),
+
     ('pcgrandom.PCG_XSL_RR_V0', {'seed': 41509}),
+    ('pcgrandom.PCG_XSL_RR_V0', {'seed': -3, 'sequence': 2**128 + 37}),
 ]
 
 
@@ -44,13 +47,6 @@ def constructors():
             'version': version,
             'kwargs': kwargs,
         }
-
-
-def generators():
-    """Return the specific generators to be used for reproducibility testing.
-    """
-    for constructor in constructors():
-        yield construct_generator(constructor)
 
 
 def regenerate_data_main():

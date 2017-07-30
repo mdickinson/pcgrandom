@@ -16,10 +16,8 @@
 Utilities to create the generator_fingerprints.json file.
 """
 
-import base64
 import contextlib
 import json
-import pickle
 
 from pcgrandom import pcg_generators
 
@@ -105,20 +103,6 @@ class Fingerprinter(object):
         return fingerprint
 
 
-def bytes_to_string(b):
-    """Reversibly convert an arbitrary bytestring into a unicode string, for
-    JSON serialization.
-
-    """
-    return base64.b64encode(b).decode('ascii')
-
-
-def string_to_bytes(s):
-    """Reverse transformation for bytes_to_string.
-    """
-    return base64.b64decode(s.encode('ascii'))
-
-
 def tuple_to_list(l):
     """Recursive tuple to list conversion."""
     if isinstance(l, tuple):
@@ -131,24 +115,12 @@ def json_fingerprint(constructor):
     """
     Return a JSON-serializable dict with data for the given generator.
     """
-    gen = construct_generator(constructor)
-
-    # Add pickles for all supported protocols for this version
-    # of Python.
-    pickles = []
-    for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
-        pickled_generator = pickle.dumps(gen, protocol=protocol)
-        pickle_info = {
-            'pickle': bytes_to_string(pickled_generator),
-            'protocol': protocol,
-        }
-        pickles.append(pickle_info)
+    generator = construct_generator(constructor)
 
     generator_data = {
         'constructor': constructor,
-        'fingerprint': Fingerprinter(gen).fingerprint(),
-        'pickles': pickles,
-        'state': tuple_to_list(gen.getstate()),
+        'fingerprint': Fingerprinter(generator).fingerprint(),
+        'state': tuple_to_list(generator.getstate()),
     }
     return generator_data
 
