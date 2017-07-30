@@ -16,20 +16,38 @@
 Test that we can unpickle a generator that was pickled on a possibly
 different Python version.
 """
+import os
 import pickle
+import shutil
+import tempfile
 import unittest
 
+from pcgrandom.test.testing_utils import args_in_sys_argv
 from pcgrandom.test.write_pickle_data import (
     AllGeneratorsPickles,
     pickle_filenames,
+    write_pickle_data,
 )
 
 
 class TestUnpickling(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
     def test_unpickling(self):
         for version, filename in pickle_filenames().items():
             all_pickle_data = AllGeneratorsPickles.load(filename)
             self.check_pickle_data(version, all_pickle_data)
+
+    def test_write_pickle_data(self):
+        json_filename = os.path.join(self.tempdir, 'test_pickle_data.json')
+        self.assertFalse(os.path.exists(json_filename))
+        with args_in_sys_argv([json_filename]):
+            write_pickle_data()
+        self.assertTrue(os.path.exists(json_filename))
 
     def check_pickle_data(self, version, all_pickle_data):
         for generator_data in all_pickle_data.generators:
