@@ -26,7 +26,7 @@ def load_fingerprints():
     """
     raw_data = pkgutil.get_data(
         'pcgrandom.test', 'data/generator_fingerprints.json')
-    return json.loads(raw_data.decode('utf8'))
+    return json.loads(raw_data.decode('utf-8'))
 
 
 class TestReproducibility(unittest.TestCase):
