@@ -6,6 +6,7 @@ import argparse
 import base64
 import json
 import pickle
+import platform
 
 from pcgrandom import pcg_generators
 
@@ -76,7 +77,20 @@ def write_pickle_info(generators, filename):
                 pickles=pickles,
             )
         )
-    file_content = {'generators': generator_data}
+
+    # Get platform information.
+    platform_info = {
+        'architecture': platform.architecture(),
+        'platform': platform.platform(),
+        'implementation': platform.python_implementation(),
+        'version': platform.python_version(),
+        'revision': platform.python_revision(),
+    }
+
+    file_content = dict(
+        generators=generator_data,
+        platform=platform_info,
+    )
 
     # XXX Refactor, so that the above logic isn't in the same
     # place as the file writing.

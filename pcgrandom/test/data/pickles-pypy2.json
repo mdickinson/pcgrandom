@@ -150,5 +150,15 @@
                 null
             ]
         }
-    ]
+    ], 
+    "platform": {
+        "architecture": [
+            "64bit", 
+            ""
+        ], 
+        "implementation": "PyPy", 
+        "platform": "Darwin-14.5.0-x86_64-i386-64bit", 
+        "revision": "", 
+        "version": "2.7.13"
+    }
 }

@@ -198,5 +198,15 @@
                 null
             ]
         }
-    ]
+    ],
+    "platform": {
+        "architecture": [
+            "64bit",
+            ""
+        ],
+        "implementation": "CPython",
+        "platform": "Darwin-14.5.0-x86_64-i386-64bit",
+        "revision": "",
+        "version": "3.6.2"
+    }
 }
