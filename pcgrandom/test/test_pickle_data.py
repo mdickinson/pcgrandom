@@ -1,54 +1,47 @@
+# Copyright 2017 Mark Dickinson
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Test that we can unpickle a generator that was pickled on a possibly
 different Python version.
 """
-
-# XXX Put python version into pickle data file.
-
-import base64
-import json
 import pickle
-import pkgutil
 import unittest
 
-from pcgrandom.test.write_pickle_data import json_filenames
-
-
-def load_pickle_data(filename):
-    """
-    Load pickle data from the given file.
-    """
-    raw_data = pkgutil.get_data('pcgrandom.test', 'data/{}'.format(filename))
-    return json.loads(raw_data.decode('utf-8'))
-
-
-def string_to_bytes(s):
-    """Reverse transformation for bytes_to_string.
-    """
-    return base64.b64decode(s.encode('ascii'))
-
-
-def tuple_to_list(l):
-    """Recursive tuple to list conversion."""
-    if isinstance(l, tuple):
-        return list(map(tuple_to_list, l))
-    else:
-        return l
+from pcgrandom.test.write_pickle_data import (
+    pickle_filenames,
+    read_pickle_info,
+)
 
 
 class TestUnpickling(unittest.TestCase):
     def test_unpickling(self):
-        for version, filename in json_filenames().items():
-            all_pickle_data = load_pickle_data(filename)
+        for version, filename in pickle_filenames().items():
+            all_pickle_data = read_pickle_info(filename)
             for generator_data in all_pickle_data['generators']:
-                state = generator_data['state']
+                expected_state = generator_data['state']
+
                 for pickle_data in generator_data['pickles']:
                     protocol = pickle_data['protocol']
-                    pickled_generator = string_to_bytes(pickle_data['pickle'])
+                    pickled_generator = pickle_data['pickle']
                     if protocol > pickle.HIGHEST_PROTOCOL:
                         continue
-                    generator = pickle.loads(pickled_generator)
                     self.assertEqual(
-                        tuple_to_list(generator.getstate()),
-                        state,
+                        pickle.loads(pickled_generator).getstate(),
+                        expected_state,
+                        msg=(
+                            "Unpickling failed for version {}, "
+                            "protocol {}".format(version, protocol)
+                        ),
                     )
