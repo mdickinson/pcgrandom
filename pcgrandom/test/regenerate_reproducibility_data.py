@@ -47,6 +47,7 @@ _short_constructors = [
     ),
     "PCG_XSL_RR_V0(seed=41509)",
     "PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)",
+    "PCG_XSL_RR_V0(seed=b\"i am \\x01 a byte \\x00\\xff string\")",
 ]
 
 
