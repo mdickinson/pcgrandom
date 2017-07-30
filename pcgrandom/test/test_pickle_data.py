@@ -20,28 +20,31 @@ import pickle
 import unittest
 
 from pcgrandom.test.write_pickle_data import (
+    AllGeneratorsPickles,
     pickle_filenames,
-    read_pickle_info,
 )
 
 
 class TestUnpickling(unittest.TestCase):
     def test_unpickling(self):
         for version, filename in pickle_filenames().items():
-            all_pickle_data = read_pickle_info(filename)
-            for generator_data in all_pickle_data['generators']:
-                expected_state = generator_data['state']
+            all_pickle_data = AllGeneratorsPickles.load(filename)
+            self.check_pickle_data(version, all_pickle_data)
 
-                for pickle_data in generator_data['pickles']:
-                    protocol = pickle_data['protocol']
-                    pickled_generator = pickle_data['pickle']
-                    if protocol > pickle.HIGHEST_PROTOCOL:
-                        continue
-                    self.assertEqual(
-                        pickle.loads(pickled_generator).getstate(),
-                        expected_state,
-                        msg=(
-                            "Unpickling failed for version {}, "
-                            "protocol {}".format(version, protocol)
-                        ),
-                    )
+    def check_pickle_data(self, version, all_pickle_data):
+        for generator_data in all_pickle_data.generators:
+            expected_state = generator_data.state
+
+            for pickle_data in generator_data.pickles:
+                protocol = pickle_data.protocol
+                pickled_generator = pickle_data.data
+                if protocol > pickle.HIGHEST_PROTOCOL:
+                    continue
+                self.assertEqual(
+                    pickle.loads(pickled_generator).getstate(),
+                    expected_state,
+                    msg=(
+                        "Unpickling failed for version {}, "
+                        "protocol {}".format(version, protocol)
+                    ),
+                )

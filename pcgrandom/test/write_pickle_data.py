@@ -27,20 +27,6 @@ import platform
 from pcgrandom import pcg_generators
 
 
-def bytes_to_string(b):
-    """Reversibly convert an arbitrary bytestring into a unicode string, for
-    JSON serialization.
-
-    """
-    return base64.b64encode(b).decode('ascii')
-
-
-def string_to_bytes(s):
-    """Reverse transformation for bytes_to_string.
-    """
-    return base64.b64decode(s.encode('ascii'))
-
-
 def list_to_tuple(l):
     """Recursive list to tuple conversion."""
     if isinstance(l, list):
@@ -49,15 +35,129 @@ def list_to_tuple(l):
         return l
 
 
-def test_data_directory():
-    """
-    Locate the test data directory.
-    """
-    test_package_name = 'pcgrandom.test'
-    test_package = pkgutil.get_loader(test_package_name).load_module(
-        test_package_name)
-    return os.path.join(
-        os.path.dirname(test_package.__file__), 'data')
+def tuple_to_list(l):
+    """Recursive tuple to list conversion."""
+    if isinstance(l, tuple):
+        return list(map(tuple_to_list, l))
+    else:
+        return l
+
+
+def current_platform_info():
+    return {
+        'architecture': platform.architecture(),
+        'platform': platform.platform(),
+        'implementation': platform.python_implementation(),
+        'version': platform.python_version(),
+        'revision': platform.python_revision(),
+    }
+
+
+class PickleInfo(object):
+    def __init__(self, protocol, data):
+        self.protocol = protocol
+        self.data = data
+
+    @classmethod
+    def from_generator(cls, generator, protocol):
+        return cls(
+            protocol=protocol,
+            data=pickle.dumps(generator, protocol),
+        )
+
+    @classmethod
+    def from_json_dict(cls, json_dict):
+        return cls(
+            protocol=json_dict['protocol'],
+            data=base64.b64decode(json_dict['pickle'].encode('ascii')),
+        )
+
+    def to_json_dict(self):
+        return dict(
+            pickle=base64.b64encode(self.data).decode('ascii'),
+            protocol=self.protocol,
+        )
+
+
+class GeneratorPickles(object):
+    def __init__(self, state, pickles):
+        self.state = state
+        self.pickles = pickles
+
+    @classmethod
+    def from_generator(cls, generator):
+        pickles = [
+            PickleInfo.from_generator(generator, protocol)
+            for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
+        ]
+
+        return cls(
+            state=generator.getstate(),
+            pickles=pickles,
+        )
+
+    @classmethod
+    def from_json_dict(cls, json_dict):
+        return cls(
+            state=list_to_tuple(json_dict['state']),
+            pickles=list(map(PickleInfo.from_json_dict, json_dict['pickles'])),
+        )
+
+    def to_json_dict(self):
+        return dict(
+            state=tuple_to_list(self.state),
+            pickles=[
+                pickle_data.to_json_dict() for pickle_data in self.pickles
+            ],
+        )
+
+
+class AllGeneratorsPickles(object):
+    def __init__(self, platform_info, generators):
+        self.platform_info = platform_info
+        self.generators = generators
+
+    @classmethod
+    def from_generators(cls, generators):
+        return cls(
+            platform_info=current_platform_info(),
+            generators=[
+                GeneratorPickles.from_generator(generator)
+                for generator in generators
+            ],
+        )
+
+    @classmethod
+    def load(cls, filename):
+        """
+        Read an AllGeneratorsPickles object from a JSON file.
+        """
+        with open(filename) as f:
+            json_dict = json.load(f)
+        return cls(
+            platform_info=json_dict['platform'],
+            generators=[
+                GeneratorPickles.from_json_dict(json_generator)
+                for json_generator in json_dict['generators']
+            ],
+        )
+
+    def dump(self, filename):
+        """
+        Write this object to a file in JSON form.
+        """
+        file_content = dict(
+            generators=[
+                generator.to_json_dict()
+                for generator in self.generators
+            ],
+            platform=self.platform_info,
+        )
+        with open(filename, 'w') as f:
+            json.dump(file_content, f, sort_keys=True, indent=4)
+            # json.dump doesn't write a trailing newline. Not a big
+            # deal, but for a line-based file it's nice to have one.
+            f.write("\n")
 
 
 def pickle_filenames():
@@ -68,20 +168,17 @@ def pickle_filenames():
     -------
     Mapping from Python version identifiers to output filenames.
     """
-    data_dir = test_data_directory()
+    # Locate the test data directory.
+    test_package_name = 'pcgrandom.test'
+    test_package = pkgutil.get_loader(test_package_name).load_module(
+        test_package_name)
+    data_dir = os.path.join(os.path.dirname(test_package.__file__), 'data')
 
     versions = ['python2', 'python3', 'pypy2', 'pypy3']
     return {
         version: os.path.join(data_dir, 'pickles-{}.json'.format(version))
         for version in versions
     }
-
-
-def available_protocols():
-    """
-    Available Pickle protocols for this version of Python.
-    """
-    return range(pickle.HIGHEST_PROTOCOL + 1)
 
 
 def generators():
@@ -92,79 +189,6 @@ def generators():
         generator(seed=67189, sequence=34)
         for generator in pcg_generators
     ]
-
-
-def read_pickle_info(filename):
-    """
-    Read pickle data from a JSON file.
-
-    Returns
-    -------
-    pickle_data : dict
-        Nested dictionary containing pickle data.
-    """
-    with open(filename) as f:
-        all_pickle_data = json.load(f)
-
-    # Convert states back to tuples; decode the pickles.
-    for generator_data in all_pickle_data['generators']:
-        generator_data['state'] = list_to_tuple(generator_data['state'])
-
-        # Decode the pickles.
-        for pickle_data in generator_data['pickles']:
-            pickle_data['pickle'] = string_to_bytes(pickle_data['pickle'])
-
-    return all_pickle_data
-
-
-def write_pickle_info(generators, filename):
-    """
-    Write pickle information out in JSON form to the given filename.
-
-    The actual pickle bytestrings are base64 encoded, for ease of
-    JSON encoding.
-    """
-    generator_data = []
-    for generator in generators:
-        state = generator.getstate()
-
-        pickles = []
-        for protocol in available_protocols():
-            pickled_generator = pickle.dumps(generator, protocol=protocol)
-            pickles.append(
-                dict(
-                    protocol=protocol,
-                    pickle=bytes_to_string(pickled_generator),
-                )
-            )
-        generator_data.append(
-            dict(
-                state=state,
-                pickles=pickles,
-            )
-        )
-
-    # Get platform information.
-    platform_info = {
-        'architecture': platform.architecture(),
-        'platform': platform.platform(),
-        'implementation': platform.python_implementation(),
-        'version': platform.python_version(),
-        'revision': platform.python_revision(),
-    }
-
-    file_content = dict(
-        generators=generator_data,
-        platform=platform_info,
-    )
-
-    # XXX Refactor, so that the above logic isn't in the same
-    # place as the file writing.
-    with open(filename, 'w') as f:
-        json.dump(file_content, f, sort_keys=True, indent=4)
-        # json.dump doesn't write a trailing newline. Not a big
-        # deal, but for a line-based file it's nice to have one.
-        f.write("\n")
 
 
 def write_pickle_data():
@@ -178,13 +202,8 @@ def write_pickle_data():
         "output",
         help="Output path to write the data to (default: %(default)r).",
     )
-
     args = parser.parse_args()
-
-    write_pickle_info(
-        generators=generators(),
-        filename=args.output,
-    )
+    AllGeneratorsPickles.from_generators(generators()).dump(args.output)
 
 
 if __name__ == '__main__':
