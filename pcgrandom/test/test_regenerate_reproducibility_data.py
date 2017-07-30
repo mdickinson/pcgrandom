@@ -16,7 +16,6 @@ import contextlib
 import json
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
@@ -24,6 +23,7 @@ from pcgrandom.test.regenerate_reproducibility_data import (
     DEFAULT_REPRODUCIBILITY_FILENAME,
     regenerate_data_main,
 )
+from pcgrandom.test.testing_utils import args_in_sys_argv
 
 
 @contextlib.contextmanager
@@ -37,19 +37,6 @@ def cwd(dir):
         yield
     finally:
         os.chdir(old_cwd)
-
-
-@contextlib.contextmanager
-def args_in_sys_argv(args):
-    """
-    Temporarily change sys.argv to something of the form [prog_name, args].
-    """
-    old_sys_argv = sys.argv
-    sys.argv = sys.argv[:1] + args
-    try:
-        yield
-    finally:
-        sys.argv = old_sys_argv
 
 
 class TestRegenerateReproducibilityData(unittest.TestCase):

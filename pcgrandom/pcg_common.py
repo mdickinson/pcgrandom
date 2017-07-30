@@ -79,7 +79,7 @@ def seed_from_object(obj, bits):
 
     # For a Unicode or byte string.
     if isinstance(obj, unicode):
-        obj = obj.encode('utf8')
+        obj = obj.encode('utf-8')
 
     if isinstance(obj, bytes):
         obj_hash = hashlib.sha512(obj).digest()
