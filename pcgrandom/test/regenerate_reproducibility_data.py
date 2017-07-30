@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright 2017 Mark Dickinson
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,24 +19,41 @@ tests.
 
 """
 import argparse
+import os
+import pkgutil
 
 from pcgrandom.test.fingerprint import write_fingerprints
-from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
-from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
-from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
-
-# Default filename to use for output.
-DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
 
 
-def generators():
-    """Return the specific generators to be used for reproducibility testing.
-    """
-    return [
-        PCG_XSH_RR_V0(seed=12345),
-        PCG_XSH_RS_V0(seed=90210),
-        PCG_XSL_RR_V0(seed=41509),
-    ]
+# Path to data file.
+def reproducibility_filename():
+    test_package_name = 'pcgrandom.test'
+    test_package = pkgutil.get_loader(test_package_name).load_module(
+        test_package_name)
+    data_dir = os.path.join(os.path.dirname(test_package.__file__), 'data')
+    return os.path.join(data_dir, 'generator_fingerprints.json')
+
+
+# Generators used in reproducibility tests; short versions. Each
+# of these strings is expanded into something exec-able.
+_short_constructors = r"""
+pcgrandom.PCG_XSH_RR_V0(seed=12345)
+pcgrandom.PCG_XSH_RR_V0(seed=12345, sequence=24)
+pcgrandom.PCG_XSH_RR_V0(seed=u"noodleloaf")
+pcgrandom.PCG_XSH_RS_V0(seed=90210, sequence=-7)
+pcgrandom.PCG_XSH_RS_V0(seed=u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια")
+pcgrandom.PCG_XSL_RR_V0(seed=41509)
+pcgrandom.PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)
+pcgrandom.PCG_XSL_RR_V0(seed=b"i am \x01 a byte \x00\xff string")
+"""[1:].splitlines()
+
+
+def constructors():
+    for short_constructor in _short_constructors:
+        yield """\
+import pcgrandom
+generator = {short_constructor}
+""".format(short_constructor=short_constructor)
 
 
 def regenerate_data_main():
@@ -42,14 +61,17 @@ def regenerate_data_main():
         description="Regenerate reproducibility data.",
     )
     parser.add_argument(
-        "-o", "--output",
-        default=DEFAULT_REPRODUCIBILITY_FILENAME,
-        help="Output path to write the data to (default: %(default)r).",
+        "output",
+        help="Output path to write the generated data to.",
     )
 
     args = parser.parse_args()
 
     write_fingerprints(
-        generators=generators(),
+        constructors=constructors(),
         filename=args.output,
     )
+
+
+if __name__ == '__main__':  # pragma: no cover
+    regenerate_data_main()

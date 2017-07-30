@@ -20,23 +20,8 @@ import tempfile
 import unittest
 
 from pcgrandom.test.regenerate_reproducibility_data import (
-    DEFAULT_REPRODUCIBILITY_FILENAME,
-    regenerate_data_main,
-)
+    regenerate_data_main)
 from pcgrandom.test.testing_utils import args_in_sys_argv
-
-
-@contextlib.contextmanager
-def cwd(dir):
-    """
-    Temporarily change the current working directory.
-    """
-    old_cwd = os.getcwd()
-    os.chdir(dir)
-    try:
-        yield
-    finally:
-        os.chdir(old_cwd)
 
 
 class TestRegenerateReproducibilityData(unittest.TestCase):
@@ -51,28 +36,10 @@ class TestRegenerateReproducibilityData(unittest.TestCase):
 
     def test_write_data_with_explicit_filename(self):
         filename = os.path.join(self.tempdir, 'fingerprints.json')
-        args = ["-o", filename]
 
         self.assertFalse(os.path.exists(filename))
-        with args_in_sys_argv(args):
+        with args_in_sys_argv([filename]):
             regenerate_data_main()
-        self.assertTrue(os.path.exists(filename))
-
-        # Check that it's a valid JSON file, with the expected top-level
-        # structure.
-        with open(filename) as f:
-            contents = json.load(f)
-        self.assertIsInstance(contents, dict)
-        self.assertIn('generators', contents)
-
-    def test_write_data_no_filename(self):
-        filename = os.path.join(self.tempdir, DEFAULT_REPRODUCIBILITY_FILENAME)
-        args = []
-
-        self.assertFalse(os.path.exists(filename))
-        with args_in_sys_argv(args):
-            with cwd(self.tempdir):
-                regenerate_data_main()
         self.assertTrue(os.path.exists(filename))
 
         # Check that it's a valid JSON file, with the expected top-level

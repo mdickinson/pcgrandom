@@ -16,10 +16,10 @@
 Utilities to create the generator_fingerprints.json file.
 """
 
-import base64
 import contextlib
 import json
-import pickle
+
+from pcgrandom import pcg_generators
 
 
 CARD_SUITS = ['Spades', 'Hearts', 'Diamonds', 'Clubs']
@@ -31,6 +31,21 @@ CARDS = [
     '{} of {}'.format(value, suit)
     for suit in CARD_SUITS for value in CARD_VALUES
 ]
+
+
+# Mapping from version strings to corresponding classes.
+generator_class = {
+    genclass.VERSION: genclass
+    for genclass in pcg_generators
+}
+
+
+def construct_generator(constructor):
+    """Construct generator from JSON-serializable construction information.
+    """
+    localvars = {}
+    exec(constructor, localvars)
+    return localvars['generator']
 
 
 @contextlib.contextmanager
@@ -89,20 +104,6 @@ class Fingerprinter(object):
         return fingerprint
 
 
-def bytes_to_string(b):
-    """Reversibly convert an arbitrary bytestring into a unicode string, for
-    JSON serialization.
-
-    """
-    return base64.b64encode(b).decode('ascii')
-
-
-def string_to_bytes(s):
-    """Reverse transformation for bytes_to_string.
-    """
-    return base64.b64decode(s.encode('ascii'))
-
-
 def tuple_to_list(l):
     """Recursive tuple to list conversion."""
     if isinstance(l, tuple):
@@ -111,35 +112,29 @@ def tuple_to_list(l):
         return l
 
 
-def json_fingerprint(gen):
+def json_fingerprint(constructor):
     """
     Return a JSON-serializable dict with data for the given generator.
     """
-    # Add pickles for all supported protocols for this version
-    # of Python.
-    pickles = []
-    for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
-        pickled_generator = pickle.dumps(gen, protocol=protocol)
-        pickle_info = {
-            'pickle': bytes_to_string(pickled_generator),
-            'protocol': protocol,
-        }
-        pickles.append(pickle_info)
+    generator = construct_generator(constructor)
 
     generator_data = {
-        'fingerprint': Fingerprinter(gen).fingerprint(),
-        'pickles': pickles,
-        'state': tuple_to_list(gen.getstate()),
+        'constructor': constructor,
+        'fingerprint': Fingerprinter(generator).fingerprint(),
+        'state': tuple_to_list(generator.getstate()),
     }
     return generator_data
 
 
-def write_fingerprints(generators, filename):
+def write_fingerprints(constructors, filename):
     """
     Write fingerprint data for each given generator to the given file.
     """
     file_content = {
-        'generators': [json_fingerprint(gen) for gen in generators],
+        'generators': [
+            json_fingerprint(constructor)
+            for constructor in constructors
+        ],
     }
     with open(filename, 'w') as f:
         json.dump(file_content, f, sort_keys=True, indent=4)
