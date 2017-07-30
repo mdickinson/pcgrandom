@@ -20,23 +20,25 @@ __all__ = [
     # Generators.
     "PCG_XSH_RR_V0", "PCG_XSH_RS_V0", "PCG_XSL_RR_V0",
 
-    # Generator synonyms
+    # Generator synonyms.
     "PCG32", "PCG64", "Random",
+
+    # List of all available generators.
+    "pcg_generators",
 
     # Methods related to the internal state.
     "getstate", "jumpahead", "seed", "setstate",
 
-    # Methods of the auto-created instance: integer generators
+    # Methods of the auto-created instance: integer generators.
     "getrandbits", "randint", "randrange",
 
-    # Methods of the auto-created instance: combinatorial
+    # Methods of the auto-created instance: combinatorial.
     "choice", "choices", "sample", "shuffle",
 
-    # Methods of the auto-created instance: float generators
+    # Methods of the auto-created instance: float generators.
     "betavariate", "expovariate", "gammavariate", "gauss", "lognormvariate",
     "normalvariate", "paretovariate", "random", "triangular", "uniform",
     "vonmisesvariate", "weibullvariate",
-
 ]
 
 # Allow users to do 'from pcgrandom import Random', to mimic standard library
@@ -50,12 +52,18 @@ Random = PCG_XSH_RR_V0
 PCG32 = PCG_XSH_RR_V0
 PCG64 = PCG_XSL_RR_V0
 
+# List of all available generators. Used mostly in testing.
+pcg_generators = [
+    PCG_XSH_RR_V0,
+    PCG_XSH_RS_V0,
+    PCG_XSL_RR_V0,
+]
+
 # Create one instance, seeded from urandom, and export its methods
 # as module-level functions.  The functions share state across all uses
 # (both in the user's code and in the Python libraries), but that's fine
 # for most programs and is easier for the casual user than making them
 # instantiate their own Random() instance.
-
 _inst = Random()
 
 seed = _inst.seed

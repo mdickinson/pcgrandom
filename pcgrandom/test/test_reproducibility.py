@@ -18,7 +18,8 @@ import pkgutil
 import unittest
 
 from pcgrandom.test.fingerprint import json_fingerprint, string_to_bytes
-from pcgrandom.test.regenerate_reproducibility_data import generators
+from pcgrandom.test.regenerate_reproducibility_data import (
+    constructors, generators)
 
 
 def load_fingerprints():
@@ -36,42 +37,25 @@ class TestReproducibility(unittest.TestCase):
         fingerprints = load_fingerprints()
 
         for generator_data in fingerprints['generators']:
-            # For each pickle, we create the generator from the pickle
-            # and then take its fingerprint. First we need to find only
-            # those pickles compatible with the current version of Python.
-            pickles_by_protocol = {
-                pickle['protocol']: pickle['pickle']
-                for pickle in generator_data['pickles']
-            }
-            usable_protocols = (
-                set(pickles_by_protocol)
-                & set(range(pickle.HIGHEST_PROTOCOL + 1))
+            constructor = generator_data['constructor']
+            computed_data = json_fingerprint(constructor)
+
+            self.assertEqual(
+                generator_data['state'],
+                computed_data['state'],
             )
-
-            # Need at least one usable pickle, else the test isn't very useful.
-            self.assertGreater(len(usable_protocols), 0)
-
-            for protocol in usable_protocols:
-                pickled_generator = pickles_by_protocol[protocol]
-                generator = pickle.loads(string_to_bytes(pickled_generator))
-                computed_data = json_fingerprint(generator)
-
-                self.assertEqual(
-                    generator_data['state'],
-                    computed_data['state'],
-                )
-                self.assertEqual(
-                    generator_data['fingerprint'],
-                    computed_data['fingerprint'],
-                )
+            self.assertEqual(
+                generator_data['fingerprint'],
+                computed_data['fingerprint'],
+            )
 
     def test_reproducibility_from_identical_seeds(self):
         # generators() constructs a list of generators using only a seed value.
         # Two lists with differences instances but constructed with the same
         # seeds should yield identical fingerprints.
-        generators_1, generators_2 = generators(), generators()
+        constructors_1, constructors_2 = constructors(), constructors()
 
-        for g1, g2 in zip(generators_1, generators_2):
+        for g1, g2 in zip(constructors_1, constructors_2):
             self.assertEqual(
                 json_fingerprint(g1)['fingerprint'],
                 json_fingerprint(g2)['fingerprint']
@@ -83,11 +67,11 @@ class TestReproducibility(unittest.TestCase):
         # file.
         fingerprints = load_fingerprints()
 
-        for generator, generator_data in zip(
-                generators(), fingerprints['generators']):
+        for constructor, generator_data in zip(
+                constructors(), fingerprints['generators']):
             self.assertEqual(
                 generator_data['fingerprint'],
-                json_fingerprint(generator)['fingerprint']
+                json_fingerprint(constructor)['fingerprint']
             )
 
     def test_doc_reproducibility_example(self):

@@ -1,6 +1,12 @@
 {
     "generators": [
         {
+            "constructor": {
+                "kwargs": {
+                    "seed": 12345
+                },
+                "version": "pcgrandom.PCG_XSH_RR_V0"
+            },
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -243,6 +249,12 @@
             ]
         },
         {
+            "constructor": {
+                "kwargs": {
+                    "seed": 90210
+                },
+                "version": "pcgrandom.PCG_XSH_RS_V0"
+            },
             "fingerprint": {
                 "bridge_hand": [
                     [
@@ -485,6 +497,12 @@
             ]
         },
         {
+            "constructor": {
+                "kwargs": {
+                    "seed": 41509
+                },
+                "version": "pcgrandom.PCG_XSL_RR_V0"
+            },
             "fingerprint": {
                 "bridge_hand": [
                     [

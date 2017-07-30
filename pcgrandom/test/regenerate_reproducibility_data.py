@@ -18,23 +18,39 @@ tests.
 """
 import argparse
 
-from pcgrandom.test.fingerprint import write_fingerprints
-from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
-from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
-from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
+from pcgrandom.test.fingerprint import (
+    construct_generator, write_fingerprints)
 
 # Default filename to use for output.
 DEFAULT_REPRODUCIBILITY_FILENAME = "generator_fingerprints.json"
 
 
+# Seeding tests.
+generator_creators = [
+    ('pcgrandom.PCG_XSH_RR_V0', {'seed': 12345}),
+    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 0}),
+    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 24}),
+    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': -67}),
+    # ('PCG_XSH_RR_V0', {'seed': 12345, 'sequence': 1132948199097681250173}),
+
+    ('pcgrandom.PCG_XSH_RS_V0', {'seed': 90210}),
+    ('pcgrandom.PCG_XSL_RR_V0', {'seed': 41509}),
+]
+
+
+def constructors():
+    for version, kwargs in generator_creators:
+        yield {
+            'version': version,
+            'kwargs': kwargs,
+        }
+
+
 def generators():
     """Return the specific generators to be used for reproducibility testing.
     """
-    return [
-        PCG_XSH_RR_V0(seed=12345),
-        PCG_XSH_RS_V0(seed=90210),
-        PCG_XSL_RR_V0(seed=41509),
-    ]
+    for constructor in constructors():
+        yield construct_generator(constructor)
 
 
 def regenerate_data_main():
@@ -50,6 +66,6 @@ def regenerate_data_main():
     args = parser.parse_args()
 
     write_fingerprints(
-        generators=generators(),
+        constructors=constructors(),
         filename=args.output,
     )

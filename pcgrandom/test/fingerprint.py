@@ -21,6 +21,8 @@ import contextlib
 import json
 import pickle
 
+from pcgrandom import pcg_generators
+
 
 CARD_SUITS = ['Spades', 'Hearts', 'Diamonds', 'Clubs']
 CARD_VALUES = [
@@ -31,6 +33,20 @@ CARDS = [
     '{} of {}'.format(value, suit)
     for suit in CARD_SUITS for value in CARD_VALUES
 ]
+
+
+# Mapping from version strings to corresponding classes.
+generator_class = {
+    genclass.VERSION: genclass
+    for genclass in pcg_generators
+}
+
+
+def construct_generator(constructor):
+    """Construct generator from JSON-serializable construction information.
+    """
+    version, kwargs = constructor['version'], constructor['kwargs']
+    return generator_class[version](**kwargs)
 
 
 @contextlib.contextmanager
@@ -111,10 +127,12 @@ def tuple_to_list(l):
         return l
 
 
-def json_fingerprint(gen):
+def json_fingerprint(constructor):
     """
     Return a JSON-serializable dict with data for the given generator.
     """
+    gen = construct_generator(constructor)
+
     # Add pickles for all supported protocols for this version
     # of Python.
     pickles = []
@@ -127,6 +145,7 @@ def json_fingerprint(gen):
         pickles.append(pickle_info)
 
     generator_data = {
+        'constructor': constructor,
         'fingerprint': Fingerprinter(gen).fingerprint(),
         'pickles': pickles,
         'state': tuple_to_list(gen.getstate()),
@@ -134,12 +153,15 @@ def json_fingerprint(gen):
     return generator_data
 
 
-def write_fingerprints(generators, filename):
+def write_fingerprints(constructors, filename):
     """
     Write fingerprint data for each given generator to the given file.
     """
     file_content = {
-        'generators': [json_fingerprint(gen) for gen in generators],
+        'generators': [
+            json_fingerprint(constructor)
+            for constructor in constructors
+        ],
     }
     with open(filename, 'w') as f:
         json.dump(file_content, f, sort_keys=True, indent=4)
