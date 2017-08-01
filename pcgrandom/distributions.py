@@ -197,10 +197,7 @@ class Distributions(object):
 
         elif alpha == 1.0:
             # expovariate(1/beta)
-            u = random()
-            while u <= 1e-7:
-                u = random()
-            return -log(u) * beta
+            return -log(1.0 - random()) * beta
 
         else:   # alpha is between 0 and 1 (exclusive)
 
