@@ -78,6 +78,10 @@ class TestDistributions(unittest.TestCase):
         sample = [self.gen.gammavariate(0.7, 1.3) for _ in range(10)]
         for elt in sample:
             self.assertIsInstance(elt, float)
+        # Generate enough deviates to exercise all the branches.
+        sample = [self.gen.gammavariate(0.2, 1.3) for _ in range(100)]
+        for elt in sample:
+            self.assertIsInstance(elt, float)
         sample = [self.gen.gammavariate(1.0, 1.3) for _ in range(10)]
         for elt in sample:
             self.assertIsInstance(elt, float)
