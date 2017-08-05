@@ -17,11 +17,15 @@ Mixin class providing various distributions.
 """
 # The methods in this class are copied almost verbatim from Python's random
 # module.
+from __future__ import division
 
 import bisect
 import collections
 from math import acos, cos, e, exp, log, pi, sin, sqrt
 import operator
+
+from builtins import range
+
 
 NV_MAGICCONST = 4 * exp(-0.5)/sqrt(2.0)
 TWOPI = 2.0*pi
@@ -34,8 +38,8 @@ class Distributions(object):
     Mixin class to be used with a PRNG, providing various distributions.
 
     The target class for this mixin should provide the core generator
-    methods ``random`` and ``_randbelow``.
-
+    methods ``random`` and ``_randbelow``. The class also depends
+    on the state in self.gauss_next.
     """
     # Integer distributions
 
