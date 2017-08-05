@@ -137,12 +137,13 @@ class PCGCommon(Distributions):
             integer_seed = seed_from_object(seed, self._state_bits)
 
         self._set_state_from_seed(integer_seed)
-        self.gauss_next = None
+        self._init_distribution_state()
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
         parameters = self._multiplier, self._increment
-        return self.VERSION, parameters, self._state, self.gauss_next
+        distribution_state = self._get_distribution_state()
+        return self.VERSION, parameters, self._state, distribution_state
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
@@ -153,8 +154,9 @@ class PCGCommon(Distributions):
                 "setstate() of version {1!r}.".format(version, self.VERSION)
             )
 
-        parameters, state, gauss_next = state[1:]
-        self.gauss_next = gauss_next
+        parameters, state, distribution_state = state[1:]
+        self._set_distribution_state(distribution_state)
+
         self._state = state
         self._multiplier, self._increment = parameters
 

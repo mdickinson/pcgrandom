@@ -36,11 +36,31 @@ SG_MAGICCONST = 1.0 + log(4.5)
 class Distributions(object):
     """
     Mixin class to be used with a PRNG, providing various distributions.
+    The class also manages the state held in self.gauss_next.
 
     The target class for this mixin should provide the core generator
-    methods ``random`` and ``_randbelow``. The class also depends
-    on the state in self.gauss_next.
+    methods ``random`` and ``_randbelow``.
     """
+    # State management
+    def _init_distribution_state(self):
+        """
+        Initialise distribution-related state.
+        """
+        self.gauss_next = None
+
+    def _get_distribution_state(self):
+        """
+        Get object representing any currently stored state
+        related to the distributions.
+        """
+        return self.gauss_next
+
+    def _set_distribution_state(self, state):
+        """
+        Set a state obtained from _get_distribution_state.
+        """
+        self.gauss_next = state
+
     # Integer distributions
 
     def randrange(self, start, stop=None, step=None):
