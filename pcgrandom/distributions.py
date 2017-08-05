@@ -18,7 +18,10 @@ Mixin class providing various distributions.
 # The methods in this class are copied almost verbatim from Python's random
 # module.
 
+import bisect
+import collections
 from math import acos, cos, e, exp, log, pi, sin, sqrt
+import operator
 
 NV_MAGICCONST = 4 * exp(-0.5)/sqrt(2.0)
 TWOPI = 2.0*pi
@@ -29,7 +32,169 @@ SG_MAGICCONST = 1.0 + log(4.5)
 class Distributions(object):
     """
     Mixin class to be used with a PRNG, providing various distributions.
+
+    The target class for this mixin should provide the core generator
+    methods ``random`` and ``_randbelow``.
+
     """
+    # Integer distributions
+
+    def randrange(self, start, stop=None, step=None):
+        """Choose a random item from range(start, stop[, step]).
+
+        """
+        # Reimplemented from the base class to ensure reproducibility
+        # across Python versions. The code below is adapted from that
+        # in Python 3.6.
+        istart = operator.index(start)
+        if stop is None:
+            if istart > 0:
+                return self._randbelow(istart)
+            else:
+                raise ValueError(
+                    "Empty range for randrange({0}).".format(istart))
+
+        istop = operator.index(stop)
+        width = istop - istart
+        if step is None:
+            if width > 0:
+                return istart + self._randbelow(width)
+            else:
+                raise ValueError(
+                    "Empty range for randrange({0}, {1}).".format(
+                        istart, istop))
+
+        istep = operator.index(step)
+        if istep == 0:
+            raise ValueError("Zero step for randrange().")
+        n = -(-width // istep)
+        if n > 0:
+            return istart + istep * self._randbelow(n)
+        else:
+            raise ValueError(
+                "Empty range for randrange({0}, {1}, {2}).".format(
+                    istart, istop, istep))
+
+    def randint(self, a, b):
+        """Return random integer in range [a, b], including both end points.
+        """
+        istart = operator.index(a)
+        width = operator.index(b) - istart + 1
+        if width > 0:
+            return istart + self._randbelow(width)
+        else:
+            raise ValueError(
+                "Empty range for randint({0}, {1}).".format(a, b))
+
+    # Shuffling and selection
+
+    def choice(self, seq):
+        """Choose a random element from a non-empty sequence."""
+        n = len(seq)
+        if n == 0:
+            raise IndexError("Cannot choose from an empty sequence.")
+        return seq[self._randbelow(n)]
+
+    def shuffle(self, x):
+        """Shuffle list x in place, and return None."""
+        n = len(x)
+        for i in reversed(range(n)):
+            j = i + self._randbelow(n - i)
+            if j > i:
+                x[i], x[j] = x[j], x[i]
+
+    def sample(self, population, k):
+        """Chooses k unique random elements from a population sequence or set.
+
+        Returns a new list containing elements from the population while
+        leaving the original population unchanged.  The resulting list is
+        in selection order so that all sub-slices will also be valid random
+        samples.  This allows raffle winners (the sample) to be partitioned
+        into grand prize and second place winners (the subslices).
+
+        Members of the population need not be hashable or unique.  If the
+        population contains repeats, then each occurrence is a possible
+        selection in the sample.
+
+        To choose a sample in a range of integers, use range as an argument.
+        This is especially fast and space efficient for sampling from a
+        large population:   sample(range(10000000), 60)
+        """
+        if isinstance(population, collections.Set):
+            population = tuple(population)
+        if not isinstance(population, collections.Sequence):
+            raise TypeError(
+                "Population must be a sequence or set.  "
+                "For dicts, use list(d).")
+
+        n = len(population)
+        if not 0 <= k <= n:
+            raise ValueError("Sample larger than population, or negative.")
+
+        # Algorithm based on one attributed to Robert Floyd, and appearing in
+        # "More Programming Pearls", by Jon Bentley.  See also the post to
+        # python-list dated May 28th 2010, entitled "A Friday Python
+        # Programming Pearl: random sampling".
+        d = {}
+        for i in reversed(range(k)):
+            j = i + self._randbelow(n - i)
+            if j in d:
+                d[i] = d[j]
+            d[j] = i
+
+        result = [None] * k
+        for j, i in d.items():
+            result[i] = population[j]
+        return result
+
+    def choices(self, population, weights=None, cum_weights=None, k=1):
+        """Return k-sized list of population elements chosen with replacement.
+
+        If the relative weights or cumulative weights are not specified,
+        the selections are made with equal probability.
+
+        The ``cum_weights`` and ``k`` arguments should be considered
+        keyword-only. Regrettably, this can't be enforced in Python
+        2-compatible code.
+        """
+        # Code modified to remove the possibility of IndexError due to double
+        # rounding or subnormal weights. See http://bugs.python.org/issue24567
+        if cum_weights is None:
+            if weights is None:
+                n = len(population)
+                if n == 0:
+                    raise IndexError("Cannot choose from an empty population.")
+                return [population[self._randbelow(n)] for _ in range(k)]
+            cum_weights, acc = [], 0
+            for weight in weights:
+                acc += weight
+                cum_weights.append(acc)
+        elif weights is not None:
+            raise TypeError(
+                "Cannot specify both weights and cumulative weights.")
+
+        if len(population) == 0:
+            raise IndexError("Cannot choose from an empty population.")
+        if len(cum_weights) != len(population):
+            raise ValueError(
+                "The number of weights does not match the population.")
+        total = cum_weights[-1]
+        if total == 0:
+            raise ValueError(
+                "The total weight must be strictly positive.")
+        bisectors = [weight / total for weight in cum_weights]
+
+        # Note: a priori, the bisect call's return value could be
+        # len(population), which would cause an IndexError in the population
+        # lookup. However, that shouldn't happen: self.random() is strictly
+        # less than 1.0, and bisectors[-1] == 1.0, so the result of the bisect
+        # call should always be strictly smaller than len(population).
+        return [
+            population[bisect.bisect(bisectors, self.random())]
+            for _ in range(k)
+        ]
+
+    # Continuous distributions
 
     def uniform(self, a, b):
         """Random number in the range [a, b) or [a, b] depending on rounding.
