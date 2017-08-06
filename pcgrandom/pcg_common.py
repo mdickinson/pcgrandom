@@ -17,8 +17,6 @@ Common base class for the various PCG implementations.
 """
 from __future__ import division
 
-import bisect
-import collections
 import hashlib
 import operator
 import os
@@ -105,24 +103,114 @@ class PCGCommon(Distributions):
     Common base class for the PCG random generators.
     """
     def __init__(self, seed=None, sequence=None, multiplier=None):
+        self._set_core_state(
+            self._initial_core_state(seed, sequence, multiplier))
+        self._set_distribution_state(self._initial_distribution_state())
+
+    def seed(self, seed=None, sequence=None, multiplier=None):
+        """(Re)initialize internal state from integer or string object."""
+        self.__init__(seed, sequence, multiplier)
+
+    def jumpahead(self, n):
+        """Jump ahead or back in the sequence of random numbers."""
+        self._advance_state(n)
+
+    # The underlying linear congruential generator.
+
+    def _initial_core_state(self, seed, sequence, multiplier):
+        """
+        Initial core state from seed and sequence.
+        """
         if multiplier is None:
             multiplier = self._default_multiplier
-        multiplier = operator.index(multiplier) & self._state_mask
+        else:
+            multiplier = operator.index(multiplier) & self._state_mask
+            # The multiplier must be congruent to 1 modulo 4 to achieve
+            # full period. (Hull-Dobell theorem.)
+            if multiplier % 4 != 1:
+                raise ValueError("LCG multiplier must be of the form 4k+1.")
 
         if sequence is None:
             increment = self._default_increment
         else:
-            sequence = operator.index(sequence) & self._state_mask
-            increment = 2 * sequence + 1 & self._state_mask
+            increment = 2 * operator.index(sequence) + 1 & self._state_mask
 
-        # The multiplier must be congruent to 1 modulo 4 to achieve
-        # full period. (Hull-Dobell theorem.)
-        if multiplier % 4 != 1:
-            raise ValueError("LCG multiplier must be of the form 4k+1.")
+        if seed is None:
+            iseed = seed_from_system_entropy(self._state_bits)
+        else:
+            iseed = seed_from_object(seed, self._state_bits)
 
-        self._multiplier = multiplier
-        self._increment = increment
-        self.seed(seed)
+        # Choose initial state to match the PCG reference implementation.
+        state = increment + iseed & self._state_mask
+        state = state * multiplier + increment & self._state_mask
+        return multiplier, increment, state
+
+    def _get_core_state(self):
+        """
+        Get the state for the core generator.
+        """
+        return self._multiplier, self._increment, self._state
+
+    def _set_core_state(self, state):
+        """
+        Set the state for the core generator.
+        """
+        self._multiplier, self._increment, self._state = state
+
+    def _step_state(self):
+        """Advance the underlying LCG a single step."""
+        self._state = (
+            self._state * self._multiplier + self._increment
+            & self._state_mask
+        )
+
+    def _advance_state(self, n):
+        """Advance the underlying LCG a given number of steps."""
+
+        a, c, m = self._multiplier, self._increment, self._state_mask
+
+        # Reduce n modulo the period of the sequence. This turns negative jumps
+        # into positive ones.
+        n &= m
+
+        # Left-to-right binary powering algorithm.
+        an, cn = 1, 0
+        for bit in format(n, "b"):
+            an, cn = an * an & m, an * cn + cn & m
+            if bit == "1":
+                an, cn = a * an & m, a * cn + c & m
+
+        self._state = self._state * an + cn & m
+
+    def _next_output(self):
+        """Return next output; advance the underlying LCG.
+        """
+        if self._output_previous:
+            output = self._get_output()
+            self._step_state()
+        else:
+            self._step_state()
+            output = self._get_output()
+        return output
+
+    # State management and pickling.
+
+    def getstate(self):
+        """Return internal state; can be passed to setstate() later."""
+        distribution_state = self._get_distribution_state()
+        return self.VERSION, self._get_core_state(), distribution_state
+
+    def setstate(self, state):
+        """Restore internal state from object returned by getstate()."""
+
+        version, core_state, distribution_state = state
+        if version != self.VERSION:
+            raise ValueError(
+                "State with version {0!r} passed to "
+                "setstate() of version {1!r}.".format(version, self.VERSION)
+            )
+        self._set_core_state(core_state)
+        self._set_distribution_state(distribution_state)
 
     def __getstate__(self):
         return self.getstate()
@@ -130,35 +218,19 @@ class PCGCommon(Distributions):
     def __setstate__(self, state):
         self.setstate(state)
 
-    def seed(self, seed=None):
-        """Initialize internal state from hashable object.
-        """
-        if seed is None:
-            integer_seed = seed_from_system_entropy(self._state_bits)
-        else:
-            integer_seed = seed_from_object(seed, self._state_bits)
+    # Core sampling functions.
 
-        self._set_state_from_seed(integer_seed)
-        self.gauss_next = None
-
-    def getstate(self):
-        """Return internal state; can be passed to setstate() later."""
-        parameters = self._multiplier, self._increment
-        return self.VERSION, parameters, self._state, self.gauss_next
-
-    def setstate(self, state):
-        """Restore internal state from object returned by getstate()."""
-        version = state[0]
-        if version != self.VERSION:
-            raise ValueError(
-                "State with version {0!r} passed to "
-                "setstate() of version {1!r}.".format(version, self.VERSION)
-            )
-
-        parameters, state, gauss_next = state[1:]
-        self.gauss_next = gauss_next
-        self._state = state
-        self._multiplier, self._increment = parameters
+    def _randbelow(self, n):
+        """Return a random integer in range(n)."""
+        output_bits = self._output_bits
+        # Invariant: x is uniformly distributed in range(h).
+        x, h = 0, 1
+        while True:
+            q, r = divmod(h, n)
+            if r <= x:
+                # int call converts small longs to ints on Python 2.
+                return int((x - r) // q)
+            x, h = x << output_bits | self._next_output(), r << output_bits
 
     def getrandbits(self, k):
         """Generate an integer in the range [0, 2**k).
@@ -184,209 +256,3 @@ class PCGCommon(Distributions):
     def random(self):
         """Get the next random number in the range [0.0, 1.0)."""
         return self.getrandbits(53)/9007199254740992
-
-    def _randbelow(self, n):
-        """Return a random integer in range(n)."""
-        output_bits = self._output_bits
-        # Invariant: x is uniformly distributed in range(h).
-        x, h = 0, 1
-        while True:
-            q, r = divmod(h, n)
-            if r <= x:
-                # int call converts small longs to ints on Python 2.
-                return int((x - r) // q)
-            x, h = x << output_bits | self._next_output(), r << output_bits
-
-    def randrange(self, start, stop=None, step=None):
-        """Choose a random item from range(start, stop[, step]).
-
-        """
-        # Reimplemented from the base class to ensure reproducibility
-        # across Python versions. The code below is adapted from that
-        # in Python 3.6.
-        istart = operator.index(start)
-        if stop is None:
-            if istart > 0:
-                return self._randbelow(istart)
-            else:
-                raise ValueError(
-                    "Empty range for randrange({0}).".format(istart))
-
-        istop = operator.index(stop)
-        width = istop - istart
-        if step is None:
-            if width > 0:
-                return istart + self._randbelow(width)
-            else:
-                raise ValueError(
-                    "Empty range for randrange({0}, {1}).".format(
-                        istart, istop))
-
-        istep = operator.index(step)
-        if istep == 0:
-            raise ValueError("Zero step for randrange().")
-        n = -(-width // istep)
-        if n > 0:
-            return istart + istep * self._randbelow(n)
-        else:
-            raise ValueError(
-                "Empty range for randrange({0}, {1}, {2}).".format(
-                    istart, istop, istep))
-
-    def randint(self, a, b):
-        """Return random integer in range [a, b], including both end points.
-        """
-        istart = operator.index(a)
-        width = operator.index(b) - istart + 1
-        if width > 0:
-            return istart + self._randbelow(width)
-        else:
-            raise ValueError(
-                "Empty range for randint({0}, {1}).".format(a, b))
-
-    def _advance_state(self):
-        """Advance the underlying LCG a single step."""
-        self._state = (
-            self._state * self._multiplier + self._increment
-            & self._state_mask
-        )
-
-    def _set_state_from_seed(self, seed):
-        """Initialize generator from a given seed.
-
-        Parameters
-        ----------
-        seed : int
-            An integer seed to use to prime the generator.
-        """
-        seed &= self._state_mask
-
-        self._state = 0
-        self._next_output()
-        self._state = (self._state + seed) & self._state_mask
-        self._next_output()
-
-    def jumpahead(self, n):
-        """Jump ahead or back in the sequence of random numbers."""
-
-        a, c, m = self._multiplier, self._increment, self._state_mask
-
-        # Reduce n modulo the period of the sequence. Note that this
-        # turns negative jumps into positive ones.
-        n &= m
-
-        # Left-to-right binary powering algorithm.
-        an, cn = 1, 0
-        for bit in format(n, "b"):
-            an, cn = an * an & m, an * cn + cn & m
-            if bit == "1":
-                an, cn = a * an & m, a * cn + c & m
-
-        self._state = self._state * an + cn & m
-
-    # sequence methods
-
-    def choice(self, seq):
-        """Choose a random element from a non-empty sequence."""
-        n = len(seq)
-        if n == 0:
-            raise IndexError("Cannot choose from an empty sequence.")
-        return seq[self._randbelow(n)]
-
-    def shuffle(self, x):
-        """Shuffle list x in place, and return None."""
-        n = len(x)
-        for i in reversed(range(n)):
-            j = i + self._randbelow(n - i)
-            if j > i:
-                x[i], x[j] = x[j], x[i]
-
-    def sample(self, population, k):
-        """Chooses k unique random elements from a population sequence or set.
-
-        Returns a new list containing elements from the population while
-        leaving the original population unchanged.  The resulting list is
-        in selection order so that all sub-slices will also be valid random
-        samples.  This allows raffle winners (the sample) to be partitioned
-        into grand prize and second place winners (the subslices).
-
-        Members of the population need not be hashable or unique.  If the
-        population contains repeats, then each occurrence is a possible
-        selection in the sample.
-
-        To choose a sample in a range of integers, use range as an argument.
-        This is especially fast and space efficient for sampling from a
-        large population:   sample(range(10000000), 60)
-        """
-        if isinstance(population, collections.Set):
-            population = tuple(population)
-        if not isinstance(population, collections.Sequence):
-            raise TypeError(
-                "Population must be a sequence or set.  "
-                "For dicts, use list(d).")
-
-        n = len(population)
-        if not 0 <= k <= n:
-            raise ValueError("Sample larger than population, or negative.")
-
-        # Algorithm based on one attributed to Robert Floyd, and appearing in
-        # "More Programming Pearls", by Jon Bentley.  See also the post to
-        # python-list dated May 28th 2010, entitled "A Friday Python
-        # Programming Pearl: random sampling".
-        d = {}
-        for i in reversed(range(k)):
-            j = i + self._randbelow(n - i)
-            if j in d:
-                d[i] = d[j]
-            d[j] = i
-
-        result = [None] * k
-        for j, i in d.items():
-            result[i] = population[j]
-        return result
-
-    def choices(self, population, weights=None, cum_weights=None, k=1):
-        """Return k-sized list of population elements chosen with replacement.
-
-        If the relative weights or cumulative weights are not specified,
-        the selections are made with equal probability.
-
-        The ``cum_weights`` and ``k`` arguments should be considered
-        keyword-only. Regrettably, this can't be enforced in Python
-        2-compatible code.
-        """
-        # Code modified to remove the possibility of IndexError due to double
-        # rounding or subnormal weights. See http://bugs.python.org/issue24567
-        if cum_weights is None:
-            if weights is None:
-                if len(population) == 0:
-                    raise IndexError("Cannot choose from an empty population.")
-                return [self.choice(population) for _ in range(k)]
-            cum_weights, acc = [], 0
-            for weight in weights:
-                acc += weight
-                cum_weights.append(acc)
-        elif weights is not None:
-            raise TypeError(
-                "Cannot specify both weights and cumulative weights.")
-
-        if len(population) == 0:
-            raise IndexError("Cannot choose from an empty population.")
-        if len(cum_weights) != len(population):
-            raise ValueError(
-                "The number of weights does not match the population.")
-        total = cum_weights[-1]
-        if total == 0:
-            raise ValueError(
-                "The total weight must be strictly positive.")
-        bisectors = [weight / total for weight in cum_weights]
-
-        # Note: a priori, the bisect call's return value could be
-        # len(population), which would cause an IndexError in the population
-        # lookup. However, that shouldn't happen: self.random() is strictly
-        # less than 1.0, and bisectors[-1] == 1.0, so the result of the bisect
-        # call should always be strictly smaller than len(population).
-        return [
-            population[bisect.bisect(bisectors, self.random())]
-            for _ in range(k)
-        ]

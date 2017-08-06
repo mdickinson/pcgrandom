@@ -31,6 +31,8 @@ class PCG_XSH_RS_V0(PCGCommon):
 
     _output_bits = 32
 
+    _output_previous = True
+
     # Multiplier reportedly used by Knuth for the MMIX LCG.
     _default_multiplier = 6364136223846793005
 
@@ -41,10 +43,3 @@ class PCG_XSH_RS_V0(PCGCommon):
         """Compute output from current state."""
         state = self._state
         return ((state ^ (state >> 22)) >> (22 + (state >> 61))) & _mask
-
-    def _next_output(self):
-        """Return next output; advance the underlying LCG.
-        """
-        output = self._get_output()
-        self._advance_state()
-        return output
