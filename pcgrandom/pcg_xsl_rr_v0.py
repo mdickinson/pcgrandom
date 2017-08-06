@@ -55,6 +55,8 @@ class PCG_XSL_RR_V0(PCGCommon):
 
     _output_bits = 64
 
+    _output_previous = False
+
     # Multiplier from Table 4 of L'Ecuyer's paper.
     _default_multiplier = 47026247687942121848144207491837523525
 
@@ -65,10 +67,3 @@ class PCG_XSL_RR_V0(PCGCommon):
         """Compute output from current state."""
         state = self._state
         return _rotate64(state ^ (state >> 64), state >> 122)
-
-    def _next_output(self):
-        """Return next output; advance the underlying LCG.
-        """
-        self._advance_state()
-        output = self._get_output()
-        return output

@@ -101,7 +101,7 @@ class TestPCGCommon(object):
         gen = self.gen_class(seed=123, sequence=0, multiplier=5)
         for _ in range(10):
             old_state = gen._state
-            gen._advance_state()
+            gen._step_state()
             new_state = gen._state
             self.assertEqual(
                 new_state,

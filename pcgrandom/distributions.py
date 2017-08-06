@@ -42,11 +42,12 @@ class Distributions(object):
     methods ``random`` and ``_randbelow``.
     """
     # State management
-    def _init_distribution_state(self):
+
+    def _initial_distribution_state(self):
         """
-        Initialise distribution-related state.
+        Initial distribution-related state.
         """
-        self.gauss_next = None
+        return None
 
     def _get_distribution_state(self):
         """
