@@ -47,8 +47,8 @@ class TestSeedingFunctions(unittest.TestCase):
 
     def test_seed_from_object_large_bits(self):
         with self.assertRaises(ValueError):
-            seed_from_object("some string or other", 513)
-        seed = seed_from_object("some string or other", 512)
+            seed_from_object(b"some string or other", 513)
+        seed = seed_from_object(b"some string or other", 512)
         self.assertGreater(seed.bit_length(), 500)
         self.assertLessEqual(seed.bit_length(), 512)
 
@@ -88,9 +88,9 @@ class TestPCGCommon(object):
         self.assertEqual(gen1.getstate(), gen2.getstate())
         self.assertEqual(gen1.getstate(), gen3.getstate())
 
-    def test_seed_from_bytes_and_unicode(self):
+    def test_seed_from_buffer(self):
         gen1 = self.gen_class(seed=b"your mother was a hamster")
-        gen2 = self.gen_class(seed=u"your mother was a hamster")
+        gen2 = self.gen_class(seed=bytearray(b"your mother was a hamster"))
         self.assertEqual(gen1.getstate(), gen2.getstate())
 
     def test_sequence_default(self):
