@@ -139,7 +139,7 @@ and the classes provided by ``pcgrandom``. Here we summarise the differences.
 - While the ``Random`` class permits seeding from an arbitrary hashable object,
   the ``pcgrandom`` classes may only be seeded from integers and bytestrings
   (or slighly more generally, any object supporting either ``__index__`` or the
-  buffer protocol). To hash from a Unicode string, encode it first. Allowing
+  buffer protocol). To seed from a Unicode string, encode it first. Allowing
   arbitrary hashable objects makes it harder to guarantee reproducibility in
   the event of Python's hashing algorithms changing. See
   https://bugs.python.org/issue27706 for an example of issues caused by this in
