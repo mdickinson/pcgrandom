@@ -36,16 +36,17 @@ def reproducibility_filename():
 
 # Generators used in reproducibility tests; short versions. Each
 # of these strings is expanded into something exec-able.
-_short_constructors = r"""
+_short_constructors = """\
 pcgrandom.PCG_XSH_RR_V0(seed=12345)
 pcgrandom.PCG_XSH_RR_V0(seed=12345, sequence=24)
-pcgrandom.PCG_XSH_RR_V0(seed=u"noodleloaf")
+pcgrandom.PCG_XSH_RR_V0(seed=u"noodleloaf".encode("utf-8"))
 pcgrandom.PCG_XSH_RS_V0(seed=90210, sequence=-7)
-pcgrandom.PCG_XSH_RS_V0(seed=u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια")
+pcgrandom.PCG_XSH_RS_V0(seed=\
+    u"Το αεροστρωματόχημά μου είναι γεμάτο χέλια".encode("utf-8"))
 pcgrandom.PCG_XSL_RR_V0(seed=41509)
 pcgrandom.PCG_XSL_RR_V0(seed=-3, sequence=2**128 + 37)
-pcgrandom.PCG_XSL_RR_V0(seed=b"i am \x01 a byte \x00\xff string")
-"""[1:].splitlines()
+pcgrandom.PCG_XSL_RR_V0(seed=b"i am \\x01 a byte \\x00\\xff string")
+""".splitlines()
 
 
 def constructors():

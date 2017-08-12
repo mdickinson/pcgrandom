@@ -23,7 +23,6 @@ import os
 
 # Python 2 compatibility.
 from builtins import int as _int, range
-from past.builtins import unicode
 
 from pcgrandom.distributions import Distributions
 
@@ -50,7 +49,8 @@ def seed_from_system_entropy(bits):
 def seed_from_object(obj, bits):
     """
     Create a new integer seed from the given Python object, in
-    a reproducible manner.
+    a reproducible manner. Currently accepts only integer-like
+    objects and objects supporting the buffer protocol.
 
     Parameters
     ----------
@@ -65,35 +65,35 @@ def seed_from_object(obj, bits):
     seed : integer
         Integer seed in the range 0 <= seed < 2**bits.
     """
-    # From an integer-like.
+    # From an integer-like object: value is used as-is, after reduction modulo
+    # the appropriate power of 2.
     try:
         obj_as_integer = operator.index(obj)
     except TypeError:
         pass
     else:
-        seed_mask = ~(~0 << bits)
-        seed = obj_as_integer & seed_mask
-        return seed
+        return obj_as_integer & ~(~0 << bits)
 
-    # For a Unicode or byte string.
-    if isinstance(obj, unicode):
-        obj = obj.encode('utf-8')
-
-    if isinstance(obj, bytes):
-        obj_hash = hashlib.sha512(obj).digest()
+    # From something that supports the buffer protocol. Seed is based on
+    # truncating the sha512 secure hash of the object.
+    try:
+        obj_hash = hashlib.sha512(obj)
+    except TypeError:
+        pass
+    else:
+        digest = obj_hash.digest()
         numbytes, excess = -(-bits // 8), -bits % 8
 
-        if numbytes > len(obj_hash):
+        if numbytes > len(digest):
             raise ValueError(
                 "Cannot provide more than {} bits of seed.".format(
-                    8 * len(obj_hash)))
+                    8 * len(digest)))
 
-        seed = _int.from_bytes(obj_hash[:numbytes], byteorder="big") >> excess
-        return seed
+        return _int.from_bytes(digest[:numbytes], byteorder="big") >> excess
 
     raise TypeError(
         "Unable to create seed from object of type {}. "
-        "Please use an integer, bytestring or Unicode string.".format(
+        "Please use an integer or a bytestring.".format(
             type(obj))
     )
 
