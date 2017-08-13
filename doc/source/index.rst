@@ -10,6 +10,7 @@ Welcome to pcgrandom's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   technical
 
 
 Indices and tables
