@@ -160,17 +160,17 @@ class Distributions(object):
         # "More Programming Pearls", by Jon Bentley.  See also the post to
         # python-list dated May 28th 2010, entitled "A Friday Python
         # Programming Pearl: random sampling".
-        d = {}
+        position = {}
         for i in reversed(range(k)):
             j = i + self._randbelow(n - i)
-            if j in d:
-                d[i] = d[j]
-            d[j] = i
+            if j in position:
+                position[i] = position[j]
+            position[j] = i
 
-        result = [None] * k
-        for j, i in d.items():
-            result[i] = population[j]
-        return result
+        sample = [None] * k
+        for j, p in position.items():
+            sample[p] = population[j]
+        return sample
 
     def choices(self, population, weights=None, cum_weights=None, k=1):
         """Return k-sized list of population elements chosen with replacement.
