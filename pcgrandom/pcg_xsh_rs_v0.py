@@ -43,7 +43,23 @@ class xsh_rs_64_32(object):
     # value used in the PCG reference implementation.
     _default_increment = 1442695040888963407
 
-    def __init__(self, multiplier, increment, state):
+    def __init__(self, iseed, sequence=None, multiplier=None):
+        if multiplier is None:
+            multiplier = self._default_multiplier
+        else:
+            multiplier = operator.index(multiplier) & self._state_mask
+            if multiplier % 4 != 1:
+                raise ValueError("LCG multiplier must be of the form 4k+1")
+
+        if sequence is None:
+            increment = self._default_increment
+        else:
+            increment = 2 * operator.index(sequence) + 1 & self._state_mask
+
+        # Choose initial state to match the PCG reference implementation.
+        state = increment + iseed & self._state_mask
+        state = state * multiplier + increment & self._state_mask
+
         self._multiplier = multiplier
         self._increment = increment
         self._state = state
@@ -51,26 +67,12 @@ class xsh_rs_64_32(object):
     @classmethod
     def from_state(cls, state):
         multiplier, increment, state = state
-        return cls(multiplier, increment, state)
 
-    @classmethod
-    def initial_state(cls, iseed, sequence=None, multiplier=None):
-        if multiplier is None:
-            multiplier = cls._default_multiplier
-        else:
-            multiplier = operator.index(multiplier) & cls._state_mask
-            if multiplier % 4 != 1:
-                raise ValueError("LCG multiplier must be of the form 4k+1")
-
-        if sequence is None:
-            increment = cls._default_increment
-        else:
-            increment = 2 * operator.index(sequence) + 1 & cls._state_mask
-
-        # Choose initial state to match the PCG reference implementation.
-        state = increment + iseed & cls._state_mask
-        state = state * multiplier + increment & cls._state_mask
-        return multiplier, increment, state
+        self = object.__new__(cls)
+        self._multiplier = multiplier
+        self._increment = increment
+        self._state = state
+        return self
 
     def __iter__(self):
         return self

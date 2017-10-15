@@ -590,6 +590,11 @@ class TestPCGCommon(object):
         self.assertEqual(gen1.getstate(), gen2.getstate())
         self.assertEqual(gen1.getstate(), gen3.getstate())
 
+    def test_core_generator_an_iterator(self):
+        gen1 = self.gen_class(seed=17289)
+        core_generator = gen1._core_generator
+        self.assertIs(iter(core_generator), core_generator)
+
     # XXX Need more tests of core generator; move them to separate class.
 
     def check_uniform(self, population, sample):

@@ -36,9 +36,7 @@ class PCGCommon(Distributions):
             iseed = seed_from_system_entropy(seed_bits)
         else:
             iseed = seed_from_object(seed, seed_bits)
-
-        initial_state = self.core_gen_class.initial_state(iseed, **parameters)
-        self._core_generator = self.core_gen_class.from_state(initial_state)
+        self._core_generator = self.core_gen_class(iseed, **parameters)
         self._set_distribution_state(self._initial_distribution_state())
 
     def seed(self, seed=None, **parameters):
