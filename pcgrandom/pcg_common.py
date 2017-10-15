@@ -30,15 +30,20 @@ class PCGCommon(Distributions):
     """
     Common base class for the PCG random generators.
     """
-    def __init__(self, seed=None, sequence=None, multiplier=None):
-        initial_state = self.core_gen_class.initial_state(
-            seed, sequence, multiplier)
+    def __init__(self, seed=None, **parameters):
+        seed_bits = self.core_gen_class.seed_bits
+        if seed is None:
+            iseed = seed_from_system_entropy(seed_bits)
+        else:
+            iseed = seed_from_object(seed, seed_bits)
+
+        initial_state = self.core_gen_class.initial_state(iseed, **parameters)
         self._core_generator = self.core_gen_class.from_state(initial_state)
         self._set_distribution_state(self._initial_distribution_state())
 
-    def seed(self, seed=None, sequence=None, multiplier=None):
+    def seed(self, seed=None, **parameters):
         """(Re)initialize internal state from integer or string object."""
-        self.__init__(seed, sequence, multiplier)
+        self.__init__(seed, **parameters)
 
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""

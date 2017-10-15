@@ -54,10 +54,7 @@ class TestPCGCommon(object):
     def test_creation_with_seed_and_sequence(self):
         gen1 = self.gen_class(seed=12345, sequence=1)
         gen2 = self.gen_class(12345, sequence=2)
-        # Regression test for mdickinson/pcgrandom#25.
-        gen3 = self.gen_class(12345, 1)
         self.assertNotEqual(gen1.getstate(), gen2.getstate())
-        self.assertEqual(gen1.getrandbits(64), gen3.getrandbits(64))
 
     def test_seed_from_buffer(self):
         gen1 = self.gen_class(seed=b"your mother was a hamster")
@@ -82,7 +79,7 @@ class TestPCGCommon(object):
     def test_direct_generator_output(self):
         # XXX Really a test of the core generator.
         coregen = self.gen._core_generator
-        
+
         nsamples = 10000
         output_size = coregen.output_bits
         samples = [next(coregen) for _ in range(nsamples)]
@@ -115,7 +112,7 @@ class TestPCGCommon(object):
         gen = self.gen_class(seed=123, sequence=0, multiplier=5)
         coregen = gen._core_generator
         state = gen.getstate()
-        
+
         words = [next(coregen) for _ in range(10)]
 
         gen2 = self.gen_class()
@@ -197,8 +194,8 @@ class TestPCGCommon(object):
     def test_jumpahead(self):
         # Generate samples, each sample consuming exactly one output
         # from the core generator.
-        get_sample = lambda: self.gen.getrandbits(
-            self.gen._core_generator.output_bits)
+        def get_sample():
+            return self.gen.getrandbits(self.gen._core_generator.output_bits)
 
         original_state = self.gen.getstate()
         samples = [get_sample() for _ in range(1000)]
@@ -227,8 +224,8 @@ class TestPCGCommon(object):
         self.assertEqual(self.gen.getstate(), state)
 
     def test_invertible(self):
-        get_sample = lambda: self.gen.getrandbits(
-            self.gen._core_generator.output_bits)
+        def get_sample():
+            return self.gen.getrandbits(self.gen._core_generator.output_bits)
 
         state = self.gen.getstate()
         self.gen.jumpahead(-1)
@@ -639,4 +636,3 @@ class TestPCGCommon(object):
             for i in expected
         )
         self.assertLess(stat, chisq_99percentile[len(expected)-1])
-
