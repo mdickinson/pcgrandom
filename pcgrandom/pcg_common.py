@@ -74,7 +74,7 @@ class PCGCommon(Distributions):
 
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
-        output_bits = self._output_bits
+        output_bits = self._core_generator.output_bits
         # Invariant: x is uniformly distributed in range(h).
         x, h = 0, 1
         while True:
@@ -97,7 +97,7 @@ class PCGCommon(Distributions):
         if k < 0:
             raise ValueError("Number of bits should be nonnegative.")
 
-        output_bits = self._output_bits
+        output_bits = self._core_generator.output_bits
 
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0

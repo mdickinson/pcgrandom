@@ -115,9 +115,8 @@ class PCG_XSH_RS_V0(PCGCommon):
     This implements the generator described in section 6.3.1 of the PCG paper,
     PCG-XSH-RS, sitting on a 64-bit LCG from Knuth.
     """
-
+    # Version used to identify this generator in pickles and state tuples.
     VERSION = u"pcgrandom.PCG_XSH_RS_V0"
 
+    # The core generator class.
     core_gen_class = xsh_rs_64_32
-
-    _output_bits = core_gen_class.output_bits

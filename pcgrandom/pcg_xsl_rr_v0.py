@@ -138,8 +138,8 @@ class PCG_XSL_RR_V0(PCGCommon):
     This implements the generator described in section 6.3.1 of the PCG paper,
     PCG-XSL-RR, sitting on a 128-bit LCG.
     """
+    # Version used to identify this generator in pickles and state tuples.
     VERSION = u"pcgrandom.PCG_XSL_RR_V0"
 
+    # The core generator class.
     core_gen_class = xsl_rr_128_64
-
-    _output_bits = core_gen_class.output_bits

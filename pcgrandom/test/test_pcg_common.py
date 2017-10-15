@@ -197,7 +197,8 @@ class TestPCGCommon(object):
     def test_jumpahead(self):
         # Generate samples, each sample consuming exactly one output
         # from the core generator.
-        get_sample = lambda: self.gen.getrandbits(self.gen._output_bits)
+        get_sample = lambda: self.gen.getrandbits(
+            self.gen._core_generator.output_bits)
 
         original_state = self.gen.getstate()
         samples = [get_sample() for _ in range(1000)]
@@ -226,7 +227,8 @@ class TestPCGCommon(object):
         self.assertEqual(self.gen.getstate(), state)
 
     def test_invertible(self):
-        get_sample = lambda: self.gen.getrandbits(self.gen._output_bits)
+        get_sample = lambda: self.gen.getrandbits(
+            self.gen._core_generator.output_bits)
 
         state = self.gen.getstate()
         self.gen.jumpahead(-1)

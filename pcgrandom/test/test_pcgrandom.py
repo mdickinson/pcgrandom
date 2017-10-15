@@ -41,11 +41,11 @@ class TestPCGRandom(unittest.TestCase):
 
     def test_pcg_32(self):
         gen = pcgrandom.PCG32()
-        self.assertEqual(gen._output_bits, 32)
+        self.assertEqual(gen._core_generator.output_bits, 32)
 
     def test_pcg_64(self):
         gen = pcgrandom.PCG64()
-        self.assertEqual(gen._output_bits, 64)
+        self.assertEqual(gen._core_generator.output_bits, 64)
 
     def test_float_generators(self):
         # Just exercise the float generators to make sure that they're usable.
