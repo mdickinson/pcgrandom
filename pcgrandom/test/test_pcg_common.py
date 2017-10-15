@@ -59,32 +59,10 @@ class TestPCGCommon(object):
         self.assertNotEqual(gen1.getstate(), gen2.getstate())
         self.assertEqual(gen1.getrandbits(64), gen3.getrandbits(64))
 
-    def test_seed_from_integer(self):
-        gen1 = self.gen_class(seed=17289)
-        gen2 = self.gen_class(seed=17289 + 2**self.gen_class._state_bits)
-        gen3 = self.gen_class(seed=17289 - 2**self.gen_class._state_bits)
-        self.assertEqual(gen1.getstate(), gen2.getstate())
-        self.assertEqual(gen1.getstate(), gen3.getstate())
-
     def test_seed_from_buffer(self):
         gen1 = self.gen_class(seed=b"your mother was a hamster")
         gen2 = self.gen_class(seed=bytearray(b"your mother was a hamster"))
         self.assertEqual(gen1.getstate(), gen2.getstate())
-
-    def test_sequence_default(self):
-        gen = self.gen_class(seed=12345)
-        self.assertEqual(gen._increment, gen._default_increment)
-
-    def test_specification_of_multiplier(self):
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        for _ in range(10):
-            old_state = gen._state
-            gen._step_state()
-            new_state = gen._state
-            self.assertEqual(
-                new_state,
-                (old_state * 5 + gen._increment) % (2**gen._state_bits)
-            )
 
     def test_version_is_unicode(self):
         self.assertIsInstance(self.gen.VERSION, type(u''))
@@ -102,10 +80,12 @@ class TestPCGCommon(object):
             self.assertEqual(words, new_words)
 
     def test_direct_generator_output(self):
-        # Direct test of _next_output method.
+        # XXX Really a test of the core generator.
+        coregen = self.gen._core_generator
+        
         nsamples = 10000
-        output_size = self.gen._output_bits
-        samples = [self.gen._next_output() for _ in range(nsamples)]
+        output_size = coregen.output_bits
+        samples = [next(coregen) for _ in range(nsamples)]
 
         # Check that all samples are in the expected range.
         self.assertLessEqual(0, min(samples))
@@ -133,12 +113,15 @@ class TestPCGCommon(object):
 
     def test_state_includes_multiplier(self):
         gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        coregen = gen._core_generator
         state = gen.getstate()
-        words = [gen._next_output() for _ in range(10)]
+        
+        words = [next(coregen) for _ in range(10)]
 
         gen2 = self.gen_class()
         gen2.setstate(state)
-        same_again = [gen2._next_output() for _ in range(10)]
+        coregen2 = gen2._core_generator
+        same_again = [next(coregen2) for _ in range(10)]
         self.assertEqual(words, same_again)
 
     def test_bad_multiplier(self):
@@ -214,12 +197,14 @@ class TestPCGCommon(object):
     def test_jumpahead(self):
         # Generate samples, each sample consuming exactly one output
         # from the core generator.
+        get_sample = lambda: self.gen.getrandbits(self.gen._output_bits)
+
         original_state = self.gen.getstate()
-        samples = [self.gen._next_output() for _ in range(1000)]
+        samples = [get_sample() for _ in range(1000)]
 
         # Rewind, check we can produce the exact same samples.
         self.gen.jumpahead(-1000)
-        same_again = [self.gen._next_output() for _ in range(1000)]
+        same_again = [get_sample() for _ in range(1000)]
         self.assertEqual(samples, same_again)
 
         # Now jump around randomly within the collection of samples,
@@ -230,7 +215,7 @@ class TestPCGCommon(object):
         current_pos = 0
         for next_pos in positions:
             self.gen.jumpahead(next_pos - current_pos)
-            sample = self.gen._next_output()
+            sample = get_sample()
             self.assertEqual(sample, samples[next_pos])
             current_pos = next_pos + 1
 
@@ -241,24 +226,12 @@ class TestPCGCommon(object):
         self.assertEqual(self.gen.getstate(), state)
 
     def test_invertible(self):
-        gen = self.gen_class(seed=12345)
-        state = gen.getstate()
-        gen.jumpahead(-1)
-        gen._next_output()
-        self.assertEqual(gen.getstate(), state)
+        get_sample = lambda: self.gen.getrandbits(self.gen._output_bits)
 
-    def test_full_period(self):
-        gen = self.gen_class(seed=12345)
-        expected_period = 2**gen._state_bits
-        half_period = expected_period // 2
-
-        state_start = gen.getstate()
-        gen.jumpahead(half_period)
-        state_half = gen.getstate()
-        gen.jumpahead(half_period)
-        state_full = gen.getstate()
-        self.assertEqual(state_start, state_full)
-        self.assertNotEqual(state_start, state_half)
+        state = self.gen.getstate()
+        self.gen.jumpahead(-1)
+        get_sample()
+        self.assertEqual(self.gen.getstate(), state)
 
     def test_state_preserves_gauss(self):
         # Test a state with gauss_next = None
@@ -571,6 +544,55 @@ class TestPCGCommon(object):
         binned_sample = [int(13*x) for x in sample]
         self.check_uniform(range(13), binned_sample)
 
+    def test_specification_of_multiplier(self):
+        # XXX This is really a test of the core generator.
+        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
+        coregen = gen._core_generator
+
+        for _ in range(10):
+            old_state = coregen._state
+            next(coregen)
+            new_state = coregen._state
+            self.assertEqual(
+                new_state,
+                (old_state * 5 + coregen._increment) % (2**coregen._state_bits)
+            )
+
+    def test_sequence_default(self):
+        # XXX This is really a test of the core generator.
+        gen = self.gen_class(seed=12345)
+        coregen = gen._core_generator
+
+        self.assertEqual(coregen._increment, coregen._default_increment)
+
+    def test_full_period(self):
+        # XXX Yep, another test of the core generator.
+        gen = self.gen_class(seed=12345)
+        coregen = gen._core_generator
+
+        expected_period = 2**coregen._state_bits
+        half_period = expected_period // 2
+
+        state_start = coregen.getstate()
+        coregen.advance(half_period)
+        state_half = coregen.getstate()
+        coregen.advance(half_period)
+        state_full = coregen.getstate()
+        self.assertEqual(state_start, state_full)
+        self.assertNotEqual(state_start, state_half)
+
+    def test_seed_from_integer(self):
+        # XXX Another test of the core generator.
+        gen1 = self.gen_class(seed=17289)
+        state_bits = gen1._core_generator._state_bits
+
+        gen2 = self.gen_class(seed=17289 + 2**state_bits)
+        gen3 = self.gen_class(seed=17289 - 2**state_bits)
+        self.assertEqual(gen1.getstate(), gen2.getstate())
+        self.assertEqual(gen1.getstate(), gen3.getstate())
+
+    # XXX Need more tests of core generator; move them to separate class.
+
     def check_uniform(self, population, sample):
         """
         Check uniformity via a chi-squared test with p-value 0.99.
@@ -615,3 +637,4 @@ class TestPCGCommon(object):
             for i in expected
         )
         self.assertLess(stat, chisq_99percentile[len(expected)-1])
+

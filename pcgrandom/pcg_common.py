@@ -44,51 +44,6 @@ class PCGCommon(Distributions):
         """Jump ahead or back in the sequence of random numbers."""
         self._core_generator.advance(n)
 
-    # The underlying linear congruential generator.
-
-    def _get_core_state(self):
-        """
-        Get the state for the core generator.
-        """
-        return self._multiplier, self._increment, self._state
-
-    def _set_core_state(self, state):
-        """
-        Set the state for the core generator.
-        """
-        self._multiplier, self._increment, self._state = state
-
-    def _step_state(self):
-        """Advance the underlying LCG a single step."""
-        self._state = (
-            self._state * self._multiplier + self._increment
-            & self._state_mask
-        )
-
-    def _advance_state(self, n):
-        """Advance the underlying LCG a given number of steps."""
-
-        a, c, m = self._multiplier, self._increment, self._state_mask
-
-        # Reduce n modulo the period of the sequence. This turns negative jumps
-        # into positive ones.
-        n &= m
-
-        # Left-to-right binary powering algorithm.
-        an, cn = 1, 0
-        for bit in format(n, "b"):
-            an, cn = an * an & m, an * cn + cn & m
-            if bit == "1":
-                an, cn = a * an & m, a * cn + c & m
-
-        self._state = self._state * an + cn & m
-
-    # XXX Remove this function? What do we need it for?
-
-    def _next_output(self):
-        """Return next output and advance the underlying LCG."""
-        return next(self._core_generator)
-
     # State management and pickling.
 
     def getstate(self):
@@ -127,7 +82,8 @@ class PCGCommon(Distributions):
             if r <= x:
                 # int call converts small longs to ints on Python 2.
                 return int((x - r) // q)
-            x, h = x << output_bits | self._next_output(), r << output_bits
+            output = next(self._core_generator)
+            x, h = x << output_bits | output, r << output_bits
 
     def getrandbits(self, k):
         """Generate an integer in the range [0, 2**k).
@@ -146,7 +102,8 @@ class PCGCommon(Distributions):
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0
         for _ in range(numwords):
-            acc = acc << output_bits | self._next_output()
+            output = next(self._core_generator)
+            acc = acc << output_bits | output
         # int call converts small longs to ints on Python 2.
         return int(acc >> excess_bits)
 
