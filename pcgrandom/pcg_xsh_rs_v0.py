@@ -64,6 +64,9 @@ class xsh_rs_64_32(object):
         self._increment = increment
         self._state = state
 
+    def get_state(self):
+        return self._multiplier, self._increment, self._state
+
     @classmethod
     def from_state(cls, state):
         multiplier, increment, state = state
@@ -103,9 +106,6 @@ class xsh_rs_64_32(object):
                 an, cn = a * an & m, a * cn + c & m
 
         self._state = self._state * an + cn & m
-
-    def getstate(self):
-        return self._multiplier, self._increment, self._state
 
 
 class PCG_XSH_RS_V0(PCGCommon):

@@ -87,6 +87,9 @@ class xsl_rr_128_64(object):
         self._increment = increment
         self._state = state
 
+    def get_state(self):
+        return self._multiplier, self._increment, self._state
+
     @classmethod
     def from_state(cls, state):
         multiplier, increment, state = state
@@ -126,9 +129,6 @@ class xsl_rr_128_64(object):
                 an, cn = a * an & m, a * cn + c & m
 
         self._state = self._state * an + cn & m
-
-    def getstate(self):
-        return self._multiplier, self._increment, self._state
 
 
 class PCG_XSL_RR_V0(PCGCommon):

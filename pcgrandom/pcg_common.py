@@ -53,7 +53,7 @@ class PCGCommon(Distributions):
         """Return internal state; can be passed to setstate() later."""
         distribution_state = self._get_distribution_state()
         return (
-            self.VERSION, self._core_generator.getstate(), distribution_state)
+            self.VERSION, self._core_generator.get_state(), distribution_state)
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""

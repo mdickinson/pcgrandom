@@ -572,11 +572,11 @@ class TestPCGCommon(object):
         expected_period = 2**coregen._state_bits
         half_period = expected_period // 2
 
-        state_start = coregen.getstate()
+        state_start = coregen.get_state()
         coregen.advance(half_period)
-        state_half = coregen.getstate()
+        state_half = coregen.get_state()
         coregen.advance(half_period)
-        state_full = coregen.getstate()
+        state_full = coregen.get_state()
         self.assertEqual(state_start, state_full)
         self.assertNotEqual(state_start, state_half)
 
