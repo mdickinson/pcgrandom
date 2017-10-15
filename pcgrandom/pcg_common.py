@@ -31,8 +31,9 @@ class PCGCommon(Distributions):
     Common base class for the PCG random generators.
     """
     def __init__(self, seed=None, sequence=None, multiplier=None):
-        self._set_core_state(
-            self._initial_core_state(seed, sequence, multiplier))
+        initial_state = self.core_gen_class.initial_state(
+            seed, sequence, multiplier)
+        self._core_generator = self.core_gen_class.from_state(initial_state)
         self._set_distribution_state(self._initial_distribution_state())
 
     def seed(self, seed=None, sequence=None, multiplier=None):
@@ -41,37 +42,9 @@ class PCGCommon(Distributions):
 
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""
-        self._advance_state(n)
+        self._core_generator.advance(n)
 
     # The underlying linear congruential generator.
-
-    def _initial_core_state(self, seed, sequence, multiplier):
-        """
-        Initial core state from seed and sequence.
-        """
-        if multiplier is None:
-            multiplier = self._default_multiplier
-        else:
-            multiplier = operator.index(multiplier) & self._state_mask
-            # The multiplier must be congruent to 1 modulo 4 to achieve
-            # full period. (Hull-Dobell theorem.)
-            if multiplier % 4 != 1:
-                raise ValueError("LCG multiplier must be of the form 4k+1.")
-
-        if sequence is None:
-            increment = self._default_increment
-        else:
-            increment = 2 * operator.index(sequence) + 1 & self._state_mask
-
-        if seed is None:
-            iseed = seed_from_system_entropy(self._state_bits)
-        else:
-            iseed = seed_from_object(seed, self._state_bits)
-
-        # Choose initial state to match the PCG reference implementation.
-        state = increment + iseed & self._state_mask
-        state = state * multiplier + increment & self._state_mask
-        return multiplier, increment, state
 
     def _get_core_state(self):
         """
@@ -110,23 +83,19 @@ class PCGCommon(Distributions):
 
         self._state = self._state * an + cn & m
 
+    # XXX Remove this function? What do we need it for?
+
     def _next_output(self):
-        """Return next output; advance the underlying LCG.
-        """
-        if self._output_previous:
-            output = self._get_output()
-            self._step_state()
-        else:
-            self._step_state()
-            output = self._get_output()
-        return output
+        """Return next output and advance the underlying LCG."""
+        return next(self._core_generator)
 
     # State management and pickling.
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
         distribution_state = self._get_distribution_state()
-        return self.VERSION, self._get_core_state(), distribution_state
+        return (
+            self.VERSION, self._core_generator.getstate(), distribution_state)
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
@@ -137,7 +106,7 @@ class PCGCommon(Distributions):
                 "State with version {0!r} passed to "
                 "setstate() of version {1!r}.".format(version, self.VERSION)
             )
-        self._set_core_state(core_state)
+        self._core_generator = self.core_gen_class.from_state(core_state)
         self._set_distribution_state(distribution_state)
 
     def __getstate__(self):

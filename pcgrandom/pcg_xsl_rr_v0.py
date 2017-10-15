@@ -138,39 +138,8 @@ class PCG_XSL_RR_V0(PCGCommon):
     This implements the generator described in section 6.3.1 of the PCG paper,
     PCG-XSL-RR, sitting on a 128-bit LCG.
     """
-
     VERSION = u"pcgrandom.PCG_XSL_RR_V0"
 
     core_gen_class = xsl_rr_128_64
 
     _output_bits = core_gen_class.output_bits
-
-    def __init__(self, seed=None, sequence=None, multiplier=None):
-        initial_state = self.core_gen_class.initial_state(
-            seed, sequence, multiplier)
-        self._core_generator = self.core_gen_class.from_state(initial_state)
-        self._set_distribution_state(self._initial_distribution_state())
-
-    def jumpahead(self, n):
-        self._core_generator.advance(n)
-
-    def _next_output(self):
-        return next(self._core_generator)
-
-    def setstate(self, state):
-        """Restore internal state from object returned by getstate()."""
-
-        version, core_state, distribution_state = state
-        if version != self.VERSION:
-            raise ValueError(
-                "State with version {0!r} passed to "
-                "setstate() of version {1!r}.".format(version, self.VERSION)
-            )
-        self._core_generator = self.core_gen_class.from_state(core_state)
-        self._set_distribution_state(distribution_state)
-
-    def getstate(self):
-        """Return internal state; can be passed to setstate() later."""
-        distribution_state = self._get_distribution_state()
-        return (
-            self.VERSION, self._core_generator.getstate(), distribution_state)
