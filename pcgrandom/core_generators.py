@@ -30,7 +30,7 @@ def _rotate32(v, r, _multiplier=2**32 + 1, _mask=2**32 - 1):
 
     Parameters
     ----------
-    v : Nonnegative integer.
+    v : integer.
         The value to rotate. Bits outside the 32 least significant
         bits are discarded before the rotation.
     r : integer in the range 0 <= r < 32
@@ -54,7 +54,7 @@ def _rotate64(v, r, _multiplier=2**64 + 1, _mask=2**64 - 1):
 
     Parameters
     ----------
-    v : Nonnegative integer.
+    v : integer.
         The value to rotate. Bits outside the 64 least significant
         bits are discarded before the rotation.
     r : integer in the range 0 <= r < 64
