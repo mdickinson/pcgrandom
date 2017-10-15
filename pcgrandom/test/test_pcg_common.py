@@ -543,33 +543,31 @@ class TestPCGCommon(object):
         binned_sample = [int(13*x) for x in sample]
         self.check_uniform(range(13), binned_sample)
 
-    def test_specification_of_multiplier(self):
-        # XXX This is really a test of the core generator.
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        coregen = gen._core_generator
+    def test_specification_of_parameters(self):
+        gen1 = self.gen_class(seed=123, sequence=0, multiplier=5)
+        gen2 = self.gen_class(seed=123, sequence=0)
+        gen3 = self.gen_class(seed=123, sequence=0, multiplier=5)
+        gen4 = self.gen_class(seed=123, multiplier=5)
 
-        for _ in range(10):
-            old_state = coregen._state
-            next(coregen)
-            new_state = coregen._state
-            self.assertEqual(
-                new_state,
-                (old_state * 5 + coregen._increment) % (2**coregen._state_bits)
-            )
+        seq1 = [gen1.randrange(1000) for _ in range(10)]
+        seq2 = [gen2.randrange(1000) for _ in range(10)]
+        seq3 = [gen3.randrange(1000) for _ in range(10)]
+        seq4 = [gen4.randrange(1000) for _ in range(10)]
 
-    def test_sequence_default(self):
-        # XXX This is really a test of the core generator.
-        gen = self.gen_class(seed=12345)
-        coregen = gen._core_generator
-
-        self.assertEqual(coregen._increment, coregen._default_increment)
+        self.assertNotEqual(seq1, seq2)
+        self.assertEqual(seq1, seq3)
+        self.assertNotEqual(seq1, seq4)
+        self.assertNotEqual(seq2, seq4)
 
     def test_full_period(self):
         # XXX Yep, another test of the core generator.
         gen = self.gen_class(seed=12345)
         coregen = gen._core_generator
 
-        expected_period = 2**coregen._state_bits
+        expected_period = coregen.period
+        # This test assumes that the period is a power of 2.
+        self.assertIsPowerOfTwo(expected_period)
+
         half_period = expected_period // 2
 
         state_start = coregen.get_state()
@@ -583,12 +581,10 @@ class TestPCGCommon(object):
     def test_seed_from_integer(self):
         # XXX Another test of the core generator.
         gen1 = self.gen_class(seed=17289)
-        state_bits = gen1._core_generator._state_bits
-
-        gen2 = self.gen_class(seed=17289 + 2**state_bits)
-        gen3 = self.gen_class(seed=17289 - 2**state_bits)
+        gen2 = self.gen_class(seed=17289)
+        gen3 = self.gen_class(seed=17290)
         self.assertEqual(gen1.getstate(), gen2.getstate())
-        self.assertEqual(gen1.getstate(), gen3.getstate())
+        self.assertNotEqual(gen1.getstate(), gen3.getstate())
 
     def test_core_generator_an_iterator(self):
         gen1 = self.gen_class(seed=17289)
@@ -596,6 +592,14 @@ class TestPCGCommon(object):
         self.assertIs(iter(core_generator), core_generator)
 
     # XXX Need more tests of core generator; move them to separate class.
+
+    def assertIsPowerOfTwo(self, n):
+        """
+        Assert that the given integer is a power of two.
+        """
+        self.assertTrue(
+            n > 0 and n & (n-1) == 0,
+            msg="Expected a power of two, got {}".format(n))
 
     def check_uniform(self, population, sample):
         """
