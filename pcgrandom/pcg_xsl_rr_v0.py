@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Drop-in replacement for random.Random based on PCG-XSL-RR from
+section 6.3.1 of the PCG paper.
+"""
+
 from pcgrandom.core_generators import xsl_rr_128_64
 from pcgrandom.pcg_common import PCGCommon
 
 
 class PCG_XSL_RR_V0(PCGCommon):
     """
-    Random subclass based on Melissa O'Neill's PCG family.
+    Random-like class based on Melissa O'Neill's PCG family.
 
     This implements the generator described in section 6.3.1 of the PCG paper,
     PCG-XSL-RR, sitting on a 128-bit LCG.

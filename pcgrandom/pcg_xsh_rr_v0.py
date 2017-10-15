@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Drop-in replacement for random.Random based on PCG-XSH-RR from
+section 6.3.1 of the PCG paper.
+"""
+
 from pcgrandom.core_generators import xsh_rr_64_32
 from pcgrandom.pcg_common import PCGCommon
 
 
 class PCG_XSH_RR_V0(PCGCommon):
     """
-    Random subclass based on Melissa O'Neill's PCG family.
+    Random-like class based on Melissa O'Neill's PCG family.
 
     This implements the generator described in section 6.3.1 of the PCG paper,
     PCG-XSH-RR, sitting on a 64-bit LCG from Knuth.

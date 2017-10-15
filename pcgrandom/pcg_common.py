@@ -29,6 +29,17 @@ from pcgrandom.seeding import seed_from_object, seed_from_system_entropy
 class PCGCommon(Distributions):
     """
     Common base class for the PCG random generators.
+
+    Parameters
+    ----------
+    seed : integer-like or bytes-like, optional
+        Python object to use to seed the generator. May be an integer-like
+        (something supporting the __index__ method), or bytes-like (anything
+        supporting the buffer protocol). If not given, the generator is seeded
+        from system entropy.
+
+    **parameters
+        Additional named parameters, passed to the core generator.
     """
     def __init__(self, seed=None, **parameters):
         seed_bits = self.core_gen_class.seed_bits
@@ -51,13 +62,12 @@ class PCGCommon(Distributions):
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
+        core_state = self._core_generator.get_state()
         distribution_state = self._get_distribution_state()
-        return (
-            self.VERSION, self._core_generator.get_state(), distribution_state)
+        return self.VERSION, core_state, distribution_state
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
-
         version, core_state, distribution_state = state
         if version != self.VERSION:
             raise ValueError(
@@ -68,9 +78,15 @@ class PCGCommon(Distributions):
         self._set_distribution_state(distribution_state)
 
     def __getstate__(self):
+        """
+        Pickling support.
+        """
         return self.getstate()
 
     def __setstate__(self, state):
+        """
+        Pickling support.
+        """
         self.setstate(state)
 
     # Core sampling functions.

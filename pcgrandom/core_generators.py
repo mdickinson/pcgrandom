@@ -17,7 +17,8 @@ The core PCG generators, as Python iterables.
 """
 import operator
 
-from builtins import object  # for proper handling of __next__ in Python 2
+# Python 2 compatibility (for __next__ handling).
+from builtins import object
 
 
 def _rotate32(v, r, _multiplier=2**32 + 1, _mask=2**32 - 1):
@@ -76,12 +77,13 @@ class _pcg_core(object):
     ----------
     iseed : integer
         Seed value used to initialise the generator.
-    sequence : integer, optional
-        Sequence selector. This determines the increment
-        of the underlying LCG.
-    multiplier : integer, optional
-        Multiplier for the underlying LCG. This must be
-        congruent to 1 modulo 4.
+    sequence : integer-like, optional
+        Sequence selector. This determines the increment of the underlying LCG.
+        Any object that supports __index__ may be used here.
+    multiplier : integer-like, optional
+        Multiplier for the underlying LCG. This must be congruent to 1 modulo
+        4. Any object that supports __index__ may be used here.
+
     """
     def __init__(self, iseed, sequence=None, multiplier=None):
         if multiplier is None:
