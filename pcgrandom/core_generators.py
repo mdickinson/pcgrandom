@@ -85,7 +85,7 @@ class _pcg_core(object):
         4. Any object that supports __index__ may be used here.
 
     """
-    def __init__(self, iseed, sequence=None, multiplier=None):
+    def __init__(self, sequence=None, multiplier=None):
         if multiplier is None:
             self._multiplier = self._default_multiplier
         else:
@@ -98,11 +98,7 @@ class _pcg_core(object):
         else:
             self._increment = 2*operator.index(sequence) + 1 & self._state_mask
 
-        # Choose initial state to match the PCG reference implementation.
         self._state = 0
-        self.step()
-        self._state = self._state + iseed & self._state_mask
-        self.step()
 
     def get_state(self):
         """
@@ -110,14 +106,11 @@ class _pcg_core(object):
         """
         return self._multiplier, self._increment, self._state
 
-    @classmethod
-    def from_state(cls, state):
+    def set_state(self, state):
         """
-        Create a new generator from the given state.
+        Set the internal state of this generator.
         """
-        self = object.__new__(cls)
         self._multiplier, self._increment, self._state = state
-        return self
 
     def __iter__(self):
         """
@@ -136,6 +129,16 @@ class _pcg_core(object):
             self.step()
             output = self._output()
         return output
+
+    def seed(self, iseed):
+        """
+        Set the initial state from an integer seed.
+        """
+        # Matches the PCG reference implementation.
+        self._state = 0
+        self.step()
+        self._state = self._state + iseed & self._state_mask
+        self.step()
 
     def step(self):
         """

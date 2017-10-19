@@ -23,7 +23,7 @@ import operator
 from builtins import range
 
 from pcgrandom.distributions import Distributions
-from pcgrandom.seeding import seed_from_object, seed_from_system_entropy
+from pcgrandom.seeding import seed_from_object
 
 
 class PCGCommon(Distributions):
@@ -42,23 +42,20 @@ class PCGCommon(Distributions):
         Additional named parameters, passed to the core generator.
     """
     def __init__(self, seed=None, **parameters):
-        seed_bits = self.core_gen_class.seed_bits
-        if seed is None:
-            iseed = seed_from_system_entropy(seed_bits)
-        else:
-            iseed = seed_from_object(seed, seed_bits)
-        self._core_generator = self.core_gen_class(iseed, **parameters)
-        self._set_distribution_state(self._initial_distribution_state())
+        self._core_generator = self.core_gen_class(**parameters)
+        self.seed(seed)
 
-    def seed(self, seed=None, **parameters):
+    def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
-        self.__init__(seed, **parameters)
+        iseed = seed_from_object(seed, self._core_generator.seed_bits)
+        self._core_generator.seed(iseed)
+        self._set_distribution_state(self._initial_distribution_state())
 
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""
         self._core_generator.advance(n)
 
-    # State management and pickling.
+    # State management.
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
@@ -74,20 +71,8 @@ class PCGCommon(Distributions):
                 "State with version {0!r} passed to "
                 "setstate() of version {1!r}.".format(version, self.VERSION)
             )
-        self._core_generator = self.core_gen_class.from_state(core_state)
+        self._core_generator.set_state(core_state)
         self._set_distribution_state(distribution_state)
-
-    def __getstate__(self):
-        """
-        Pickling support.
-        """
-        return self.getstate()
-
-    def __setstate__(self, state):
-        """
-        Pickling support.
-        """
-        self.setstate(state)
 
     # Core sampling functions.
 

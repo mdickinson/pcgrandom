@@ -123,6 +123,10 @@ def seed_from_object(obj, bits):
     seed : integer
         Integer seed in the range 0 <= seed < 2**bits.
     """
+    # From None.
+    if obj is None:
+        return seed_from_system_entropy(bits)
+
     # From an integer-like object: value is used as-is, after reduction modulo
     # the appropriate power of 2.
     try:
