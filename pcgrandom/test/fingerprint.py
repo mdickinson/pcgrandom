@@ -33,13 +33,6 @@ CARDS = [
 ]
 
 
-# Mapping from version strings to corresponding classes.
-generator_class = {
-    genclass.VERSION: genclass
-    for genclass in pcg_generators
-}
-
-
 def construct_generator(constructor):
     """Construct generator from JSON-serializable construction information.
     """

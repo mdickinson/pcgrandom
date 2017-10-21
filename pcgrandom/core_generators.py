@@ -171,6 +171,9 @@ class xsh_rs_64_32(_pcg_core):
     """
     Corresponds to the xsh_rs_64_32 family in the C++ implementation.
     """
+    # XXX Rename me; use me in state.
+    VERSION = u"pcgrandom.PCG_XSH_RS_V0"
+
     # Number of bits expected for the seed value.
     seed_bits = 64
 
@@ -206,6 +209,9 @@ class xsh_rr_64_32(_pcg_core):
     """
     Corresponds to the xsh_rr_64_32 family in the C++ implementation.
     """
+    # XXX Rename me; use me in state.
+    VERSION = u"pcgrandom.PCG_XSH_RR_V0"
+
     # Number of bits expected for the seed value.
     seed_bits = 64
 
@@ -241,6 +247,9 @@ class xsl_rr_128_64(_pcg_core):
     """
     Corresponds to the xsl_rr_128_64 family in the C++ implementation.
     """
+    # XXX Rename me; use me in state.
+    VERSION = u"pcgrandom.PCG_XSL_RR_V0"
+
     # Number of bits expected for the seed value.
     seed_bits = 128
 

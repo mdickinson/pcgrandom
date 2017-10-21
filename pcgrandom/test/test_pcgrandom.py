@@ -34,8 +34,8 @@ class TestPCGRandom(unittest.TestCase):
         self.assertEqual(names_in_all, public_names)
 
     def test_random_class(self):
+        self.assertEqual(pcgrandom.Random, pcgrandom.PCG32)
         gen = pcgrandom.Random()
-        self.assertIsInstance(gen, pcgrandom.PCG_XSH_RR_V0)
         # Exercise the generator to make sure nothing bad happens.
         [gen.random() for _ in range(10)]
 

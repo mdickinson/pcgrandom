@@ -21,15 +21,34 @@ from pcgrandom.core_generators import xsl_rr_128_64
 from pcgrandom.pcg_common import PCGCommon
 
 
-class PCG_XSL_RR_V0(PCGCommon):
+def PCG_XSL_RR_V0(seed=None, sequence=None, multiplier=None):
     """
-    Random-like class based on Melissa O'Neill's PCG family.
+    Return a Random-like instance based on the PCG-XSL-RR generator.
 
-    This implements the generator described in section 6.3.1 of the PCG paper,
-    PCG-XSL-RR, sitting on a 128-bit LCG.
+    PCG-XSL-RR is described in section 6.3.1 of the PCG paper. It's
+    based on a 128-bit linear congruential generator.
+
+    Parameters
+    ----------
+    seed : object, optional
+        integer-like or bytes-like object used to seed the core generator.
+    sequence : integer, optional
+        integer in the range [0, 2**127), specifying the core sequence.
+        This determines the increment used in the underlying linear
+        congruential generator.
+    multiplier : integer, optional
+        integer in the range [0, 2**128) giving the multiplier used in
+        the LCG. The default value for this is carefully chosen and
+        well-tested. Other values may give poor-quality generators;
+        change this value at your own risk!
+
+    Returns
+    -------
+    generator : PCGCommon
+        Random-like object based on the specified PCG class.
     """
-    # Version used to identify this generator in pickles and state tuples.
-    VERSION = u"pcgrandom.PCG_XSL_RR_V0"
-
-    # The core generator class.
-    core_gen_class = xsl_rr_128_64
+    core_generator = xsl_rr_128_64(sequence, multiplier)
+    return PCGCommon(
+        core_generator=core_generator,
+        seed=seed,
+    )

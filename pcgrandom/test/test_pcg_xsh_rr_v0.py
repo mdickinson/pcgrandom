@@ -23,7 +23,7 @@ from pcgrandom.test.test_pcg_common import TestPCGCommon
 
 
 class Test_PCG_XSH_RR_V0(TestPCGCommon, unittest.TestCase):
-    gen_class = PCG_XSH_RR_V0
+    gen_class = staticmethod(PCG_XSH_RR_V0)
 
     def setUp(self):
         self.gen = self.gen_class(seed=15206, sequence=1729)

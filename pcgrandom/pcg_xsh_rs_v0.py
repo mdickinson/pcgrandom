@@ -21,15 +21,34 @@ from pcgrandom.core_generators import xsh_rs_64_32
 from pcgrandom.pcg_common import PCGCommon
 
 
-class PCG_XSH_RS_V0(PCGCommon):
+def PCG_XSH_RS_V0(seed=None, sequence=None, multiplier=None):
     """
-    Random-like class based on Melissa O'Neill's PCG family.
+    Return a Random-like instance based on the PCG-XSH-RS generator.
 
-    This implements the generator described in section 6.3.1 of the PCG paper,
-    PCG-XSH-RS, sitting on a 64-bit LCG from Knuth.
+    PCG-XSH-RS is described in section 6.3.1 of the PCG paper. It's
+    based on a 64-bit linear congruential generator.
+
+    Parameters
+    ----------
+    seed : object, optional
+        integer-like or bytes-like object used to seed the core generator.
+    sequence : integer, optional
+        integer in the range [0, 2**63), specifying the core sequence.
+        This determines the increment used in the underlying linear
+        congruential generator.
+    multiplier : integer, optional
+        integer in the range [0, 2**64) giving the multiplier used in
+        the LCG. The default value for this is carefully chosen and
+        well-tested. Other values may give poor-quality generators;
+        change this value at your own risk!
+
+    Returns
+    -------
+    generator : PCGCommon
+        Random-like object based on the specified PCG class.
     """
-    # Version used to identify this generator in pickles and state tuples.
-    VERSION = u"pcgrandom.PCG_XSH_RS_V0"
-
-    # The core generator class.
-    core_gen_class = xsh_rs_64_32
+    core_generator = xsh_rs_64_32(sequence, multiplier)
+    return PCGCommon(
+        core_generator=core_generator,
+        seed=seed,
+    )

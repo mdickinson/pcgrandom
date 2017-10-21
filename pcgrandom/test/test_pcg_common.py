@@ -62,7 +62,7 @@ class TestPCGCommon(object):
         self.assertEqual(gen1.getstate(), gen2.getstate())
 
     def test_version_is_unicode(self):
-        self.assertIsInstance(self.gen.VERSION, type(u''))
+        self.assertIsInstance(self.gen._core_generator.VERSION, type(u''))
 
     def test_pickleability(self):
         for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
