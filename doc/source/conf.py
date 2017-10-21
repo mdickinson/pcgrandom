@@ -167,6 +167,3 @@ texinfo_documents = [
      author, 'pcgrandom', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
