@@ -19,8 +19,6 @@ Utilities to create the generator_fingerprints.json file.
 import contextlib
 import json
 
-from pcgrandom import pcg_generators
-
 
 CARD_SUITS = ['Spades', 'Hearts', 'Diamonds', 'Clubs']
 CARD_VALUES = [
