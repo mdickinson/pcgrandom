@@ -32,14 +32,14 @@ class PCGCommon(Distributions):
 
     Parameters
     ----------
+    core_generator : object
+        Object providing the core generator. Supports the iterator
+        protocol, along with various other methods.
     seed : integer-like or bytes-like, optional
         Python object to use to seed the generator. May be an integer-like
         (something supporting the __index__ method), or bytes-like (anything
         supporting the buffer protocol). If not given, the generator is seeded
         from system entropy.
-
-    **parameters
-        Additional named parameters, passed to the core generator.
     """
     def __init__(self, core_generator, seed=None):
         self._core_generator = core_generator
