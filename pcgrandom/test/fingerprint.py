@@ -128,7 +128,10 @@ def write_fingerprints(constructors, filename):
         ],
     }
     with open(filename, 'w') as f:
-        json.dump(file_content, f, sort_keys=True, indent=4)
+        json.dump(
+            file_content, f, sort_keys=True, indent=4,
+            separators=(',', ': '),
+        )
         # json.dump doesn't write a trailing newline. Not a big
         # deal, but for a line-based file it's nice to have one.
         f.write("\n")
