@@ -18,7 +18,7 @@ Tests for the PCG_XSH_RS_V0 generator.
 import pkgutil
 import unittest
 
-from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
+from pcgrandom import PCG_XSH_RS_V0
 from pcgrandom.test.test_pcg_common import TestPCGCommon
 
 

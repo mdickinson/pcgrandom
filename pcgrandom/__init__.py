@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
-from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
-from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
+from pcgrandom.constructors import (
+    PCG_XSH_RR_V0,
+    PCG_XSH_RS_V0,
+    PCG_XSL_RR_V0,
+)
+
 
 __all__ = [
     # Generators.
