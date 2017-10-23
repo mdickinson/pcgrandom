@@ -17,6 +17,11 @@ from pcgrandom.constructors import (
     PCG_XSH_RS_V0,
     PCG_XSL_RR_V0,
 )
+from pcgrandom.core_generators import (
+    xsh_rr_64_32,
+    xsh_rs_64_32,
+    xsl_rr_128_64,
+)
 from pcgrandom.random import Random
 
 
@@ -27,6 +32,9 @@ __all__ = [
 
     # Generator synonyms.
     "PCG32", "PCG64", "Random",
+
+    # Core generators.
+    "xsh_rr_64_32", "xsh_rs_64_32", "xsl_rr_128_64",
 
     # List of all generators (not including synonyms).
     "pcg_generators",
