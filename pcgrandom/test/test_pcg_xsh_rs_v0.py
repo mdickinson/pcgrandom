@@ -19,10 +19,10 @@ import pkgutil
 import unittest
 
 from pcgrandom import PCG_XSH_RS_V0
-from pcgrandom.test.test_pcg_common import TestPCGCommon
+from pcgrandom.test.test_random import TestRandom
 
 
-class Test_PCG_XSH_RS_V0(TestPCGCommon, unittest.TestCase):
+class Test_PCG_XSH_RS_V0(TestRandom, unittest.TestCase):
     gen_class = staticmethod(PCG_XSH_RS_V0)
 
     def setUp(self):

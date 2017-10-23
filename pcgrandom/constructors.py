@@ -20,7 +20,7 @@ from pcgrandom.core_generators import (
     xsh_rs_64_32,
     xsl_rr_128_64,
 )
-from pcgrandom.pcg_common import PCGCommon
+from pcgrandom.random import Random
 
 
 def PCG_XSH_RR_V0(seed=None, sequence=None, multiplier=None):
@@ -46,11 +46,11 @@ def PCG_XSH_RR_V0(seed=None, sequence=None, multiplier=None):
 
     Returns
     -------
-    generator : PCGCommon
+    generator : Random
         Random-like object based on the specified PCG class.
     """
     core_generator = xsh_rr_64_32(sequence, multiplier)
-    return PCGCommon(
+    return Random(
         core_generator=core_generator,
         seed=seed,
     )
@@ -79,11 +79,11 @@ def PCG_XSH_RS_V0(seed=None, sequence=None, multiplier=None):
 
     Returns
     -------
-    generator : PCGCommon
+    generator : Random
         Random-like object based on the specified PCG class.
     """
     core_generator = xsh_rs_64_32(sequence, multiplier)
-    return PCGCommon(
+    return Random(
         core_generator=core_generator,
         seed=seed,
     )
@@ -112,11 +112,11 @@ def PCG_XSL_RR_V0(seed=None, sequence=None, multiplier=None):
 
     Returns
     -------
-    generator : PCGCommon
+    generator : Random
         Random-like object based on the specified PCG class.
     """
     core_generator = xsl_rr_128_64(sequence, multiplier)
-    return PCGCommon(
+    return Random(
         core_generator=core_generator,
         seed=seed,
     )

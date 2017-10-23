@@ -21,6 +21,7 @@ import unittest
 from past.builtins import long
 
 import pcgrandom
+from pcgrandom.core_generators import xsh_rr_64_32
 
 
 class TestPCGRandom(unittest.TestCase):
@@ -34,8 +35,11 @@ class TestPCGRandom(unittest.TestCase):
         self.assertEqual(names_in_all, public_names)
 
     def test_random_class(self):
-        self.assertEqual(pcgrandom.Random, pcgrandom.PCG32)
         gen = pcgrandom.Random()
+        self.assertIsInstance(
+            gen._core_generator,
+            xsh_rr_64_32,
+        )
         # Exercise the generator to make sure nothing bad happens.
         [gen.random() for _ in range(10)]
 

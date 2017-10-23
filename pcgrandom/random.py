@@ -22,28 +22,32 @@ import operator
 # Python 2 compatibility.
 from builtins import range
 
+from pcgrandom.core_generators import xsh_rr_64_32
 from pcgrandom.distributions import Distributions
 from pcgrandom.seeding import seed_from_object
 
 
-class PCGCommon(Distributions):
+class Random(Distributions):
     """
     Common base class for the PCG random generators.
 
     Parameters
     ----------
-    core_generator : object
+    core_generator : object, optional
         Object providing the core generator. Supports the iterator
         protocol, along with various other methods.
-    seed : integer-like or bytes-like, optional
+    seed : integer-like, bytes-like, or None; optional
         Python object to use to seed the generator. May be an integer-like
-        (something supporting the __index__ method), or bytes-like (anything
-        supporting the buffer protocol). If not given, the generator is seeded
-        from system entropy.
+        object (something supporting the __index__ method), a bytes-like object
+        (anything supporting the buffer protocol), or None. If no seed is given
+        (or None is explicitly specified), the core generator is seeded from
+        system entropy.
     """
-    VERSION = u"pcgrandom.PCGCommon"
+    VERSION = u"pcgrandom.Random"
 
-    def __init__(self, core_generator, seed=None):
+    def __init__(self, seed=None, core_generator=None):
+        if core_generator is None:
+            core_generator = xsh_rr_64_32()
         self._core_generator = core_generator
         self.seed(seed)
 

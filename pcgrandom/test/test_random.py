@@ -35,7 +35,7 @@ chisq_99percentile = {
 }
 
 
-class TestPCGCommon(object):
+class TestRandom(object):
     """
     Mixin class providing tests common to all generators in the
     PCG family.

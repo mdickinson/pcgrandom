@@ -212,7 +212,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSH_RR_V0",
                     6364136223846793005,
@@ -434,7 +434,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSH_RR_V0",
                     6364136223846793005,
@@ -656,7 +656,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSH_RR_V0",
                     6364136223846793005,
@@ -878,7 +878,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSH_RS_V0",
                     6364136223846793005,
@@ -1100,7 +1100,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSH_RS_V0",
                     6364136223846793005,
@@ -1322,7 +1322,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSL_RR_V0",
                     47026247687942121848144207491837523525,
@@ -1544,7 +1544,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSL_RR_V0",
                     47026247687942121848144207491837523525,
@@ -1766,7 +1766,7 @@
                 ]
             },
             "state": [
-                "pcgrandom.PCGCommon",
+                "pcgrandom.Random",
                 [
                     "pcgrandom.PCG_XSL_RR_V0",
                     47026247687942121848144207491837523525,

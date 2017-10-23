@@ -17,10 +17,12 @@ from pcgrandom.constructors import (
     PCG_XSH_RS_V0,
     PCG_XSL_RR_V0,
 )
+from pcgrandom.random import Random
 
 
 __all__ = [
-    # Generators.
+    # Convenience functions for creating Random instances
+    # with particular core generators.
     "PCG_XSH_RR_V0", "PCG_XSH_RS_V0", "PCG_XSL_RR_V0",
 
     # Generator synonyms.
@@ -54,7 +56,6 @@ pcg_generators = [PCG_XSH_RR_V0, PCG_XSH_RS_V0, PCG_XSL_RR_V0]
 # be updated over time to point to later versions of the same generators, or
 # possibly even to different generators. In situations where reproducibility
 # matters, avoid the synonyms and use the explicit generator name.
-Random = PCG_XSH_RR_V0
 PCG32 = PCG_XSH_RR_V0
 PCG64 = PCG_XSL_RR_V0
 
