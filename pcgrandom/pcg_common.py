@@ -41,6 +41,8 @@ class PCGCommon(Distributions):
         supporting the buffer protocol). If not given, the generator is seeded
         from system entropy.
     """
+    VERSION = u"pcgrandom.PCGCommon"
+
     def __init__(self, core_generator, seed=None):
         self._core_generator = core_generator
         self.seed(seed)
@@ -61,17 +63,18 @@ class PCGCommon(Distributions):
         """Return internal state; can be passed to setstate() later."""
         core_state = self._core_generator.get_state()
         distribution_state = self._get_distribution_state()
-        return self._core_generator.VERSION, core_state, distribution_state
+        return self.VERSION, core_state, distribution_state
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
-        version, core_state, distribution_state = state
-        if version != self._core_generator.VERSION:
+        if state[0] != self.VERSION:
             raise ValueError(
                 "State with version {0!r} passed to "
                 "setstate() of version {1!r}.".format(
-                    version, self._core_generator.VERSION)
+                    state[0], self.VERSION)
             )
+
+        core_state, distribution_state = state[1:]
         self._core_generator.set_state(core_state)
         self._set_distribution_state(distribution_state)
 

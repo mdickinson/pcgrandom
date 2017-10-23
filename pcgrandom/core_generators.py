@@ -104,13 +104,20 @@ class _pcg_core(object):
         """
         Return a tuple that encapsulates the state of this generator.
         """
-        return self._multiplier, self._increment, self._state
+        return self.VERSION, self._multiplier, self._increment, self._state
 
     def set_state(self, state):
         """
         Set the internal state of this generator.
         """
-        self._multiplier, self._increment, self._state = state
+        if state[0] != self.VERSION:
+            raise ValueError(
+                "Setting state of generator with version {!r} from "
+                "a state tuple with incompatible version {!r} ".format(
+                    self.VERSION, state[0])
+            )
+
+        self._multiplier, self._increment, self._state = state[1:]
 
     def __iter__(self):
         """

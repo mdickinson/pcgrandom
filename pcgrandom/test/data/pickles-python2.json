@@ -16,8 +16,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSH_RR_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSH_RR_V0", 
                     6364136223846793005, 
                     1442695040888963407, 
                     2454684463487790647
@@ -41,8 +42,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSH_RS_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSH_RS_V0", 
                     6364136223846793005, 
                     1442695040888963407, 
                     2454684463487790647
@@ -66,8 +68,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSL_RR_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSL_RR_V0", 
                     47026247687942121848144207491837523525, 
                     117397592171526113268558934119004209487, 
                     113604755396120827644872873925328177911
@@ -91,8 +94,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSH_RR_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSH_RR_V0", 
                     6364136223846793005, 
                     69, 
                     824657131168232695
@@ -116,8 +120,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSH_RS_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSH_RS_V0", 
                     6364136223846793005, 
                     69, 
                     824657131168232695
@@ -141,8 +146,9 @@
                 }
             ], 
             "state": [
-                "pcgrandom.PCG_XSL_RR_V0", 
+                "pcgrandom.PCGCommon", 
                 [
+                    "pcgrandom.PCG_XSL_RR_V0", 
                     47026247687942121848144207491837523525, 
                     69, 
                     307048832409151833879506015154399972455
