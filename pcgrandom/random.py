@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Common base class for the various PCG implementations.
+Drop-in replacement for random.Random, with pluggable core generator.
 """
 from __future__ import division
 
@@ -27,7 +26,6 @@ from builtins import range
 
 from pcgrandom.core_generators import xsh_rr_64_32
 from pcgrandom.seeding import seed_from_object
-
 
 # Constants used for various continuous distributions.
 NV_MAGICCONST = 4 * exp(-0.5)/sqrt(2.0)
@@ -66,8 +64,8 @@ class Random(object):
 
     def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
-        iseed = seed_from_object(seed, self._core_generator.seed_bits)
-        self._core_generator.seed(iseed)
+        integer_seed = seed_from_object(seed, self._core_generator.seed_bits)
+        self._core_generator.seed(integer_seed)
         self.gauss_next = None
 
     def jumpahead(self, n):
@@ -78,8 +76,7 @@ class Random(object):
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
-        core_state = self._core_generator.get_state()
-        return self.VERSION, core_state, self.gauss_next
+        return self.VERSION, self._core_generator.state, self.gauss_next
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
@@ -89,9 +86,7 @@ class Random(object):
                 "setstate() of version {1!r}.".format(
                     state[0], self.VERSION)
             )
-
-        core_state, self.gauss_next = state[1:]
-        self._core_generator.set_state(core_state)
+        self._core_generator.state, self.gauss_next = state[1:]
 
     # Core sampling functions.
 

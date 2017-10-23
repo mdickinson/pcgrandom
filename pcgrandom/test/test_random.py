@@ -570,11 +570,11 @@ class TestRandom(object):
 
         half_period = expected_period // 2
 
-        state_start = coregen.get_state()
+        state_start = coregen.state
         coregen.advance(half_period)
-        state_half = coregen.get_state()
+        state_half = coregen.state
         coregen.advance(half_period)
-        state_full = coregen.get_state()
+        state_full = coregen.state
         self.assertEqual(state_start, state_full)
         self.assertNotEqual(state_start, state_half)
 

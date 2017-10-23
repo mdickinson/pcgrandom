@@ -100,16 +100,20 @@ class _pcg_core(object):
 
         self._state = 0
 
-    def get_state(self):
+    @property
+    def state(self):
         """
-        Return a tuple that encapsulates the state of this generator.
+        Tuple that encapsulates the state of this generator.
         """
         return self.VERSION, self._multiplier, self._increment, self._state
 
-    def set_state(self, state):
+    @state.setter
+    def state(self, state):
         """
         Set the internal state of this generator.
         """
+        # XXX We should probably not allow set operations that change
+        # the multiplier and increment.
         if state[0] != self.VERSION:
             raise ValueError(
                 "Setting state of generator with version {!r} from "
