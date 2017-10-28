@@ -73,55 +73,6 @@ class TestRandom(object):
             )
             self.assertEqual(words, new_words)
 
-    def test_direct_generator_output(self):
-        # XXX Really a test of the core generator.
-        coregen = self.gen._core_generator
-
-        nsamples = 10000
-        output_size = coregen.output_bits
-        samples = [next(coregen) for _ in range(nsamples)]
-
-        # Check that all samples are in the expected range.
-        self.assertLessEqual(0, min(samples))
-        self.assertLess(max(samples), 2**output_size)
-
-        # Count number of times individual bits have appeared.
-        counts = {}
-        for bitpos in range(output_size):
-            bit = 2**bitpos
-            counts[bitpos] = sum(1 for sample in samples if (sample & bit))
-
-        # Assuming that each bit is "fair", each count roughly follows a normal
-        # distribution with mean 0.5*nsamples and standard deviation
-        # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
-        # standard deviations from the mean.
-        bad_counts = sum(
-            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
-            for count in counts.values()
-        )
-
-        # There's about a 1 in 370 chance of any one count being bad,
-        # and the counts should be independent. To be safe, we allow
-        # up to three bad counts before failing.
-        self.assertLessEqual(bad_counts, 3)
-
-    def test_state_includes_multiplier(self):
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        coregen = gen._core_generator
-        state = gen.getstate()
-
-        words = [next(coregen) for _ in range(10)]
-
-        gen2 = self.gen_class()
-        gen2.setstate(state)
-        coregen2 = gen2._core_generator
-        same_again = [next(coregen2) for _ in range(10)]
-        self.assertEqual(words, same_again)
-
-    def test_bad_multiplier(self):
-        with self.assertRaises(ValueError):
-            self.gen_class(seed=123, sequence=0, multiplier=7)
-
     def test_independent_sequences(self):
         # Crude statistical test for lack of correlation. If X and Y are
         # independent and uniform on [0, 1], then (X - 0.5) * (Y - 0.5) has
@@ -188,46 +139,24 @@ class TestRandom(object):
         samples3 = [self.gen.random() for _ in range(10)]
         self.assertEqual(samples2, samples3)
 
-    def test_jumpahead(self):
-        # Generate samples, each sample consuming exactly one output
-        # from the core generator.
-        def get_sample():
-            return self.gen.getrandbits(self.gen._core_generator.output_bits)
-
-        original_state = self.gen.getstate()
-        samples = [get_sample() for _ in range(1000)]
-
-        # Rewind, check we can produce the exact same samples.
-        self.gen.jumpahead(-1000)
-        same_again = [get_sample() for _ in range(1000)]
-        self.assertEqual(samples, same_again)
-
-        # Now jump around randomly within the collection of samples,
-        # and check we can reproduce them.
-        positions = [self.gen.randrange(1000) for _ in range(1000)]
-
-        self.gen.setstate(original_state)
-        current_pos = 0
-        for next_pos in positions:
-            self.gen.jumpahead(next_pos - current_pos)
-            sample = get_sample()
-            self.assertEqual(sample, samples[next_pos])
-            current_pos = next_pos + 1
-
     def test_jumpahead_zero(self):
         # Corner case: jumpahead(0) should work.
         state = self.gen.getstate()
         self.gen.jumpahead(0)
         self.assertEqual(self.gen.getstate(), state)
 
-    def test_invertible(self):
-        def get_sample():
-            return self.gen.getrandbits(self.gen._core_generator.output_bits)
+    def test_jumpahead_additive(self):
+        original_state = self.gen.getstate()
 
-        state = self.gen.getstate()
-        self.gen.jumpahead(-1)
-        get_sample()
-        self.assertEqual(self.gen.getstate(), state)
+        self.gen.jumpahead(32)
+        self.gen.jumpahead(117)
+        state_separate = self.gen.getstate()
+
+        self.gen.setstate(original_state)
+        self.gen.jumpahead(149)
+        state_together = self.gen.getstate()
+
+        self.assertEqual(state_separate, state_together)
 
     def test_state_preserves_gauss(self):
         # Test a state with gauss_next = None
@@ -556,47 +485,12 @@ class TestRandom(object):
         self.assertNotEqual(seq1, seq4)
         self.assertNotEqual(seq2, seq4)
 
-    def test_full_period(self):
-        # XXX Yep, another test of the core generator.
-        gen = self.gen_class(seed=12345)
-        coregen = gen._core_generator
-
-        expected_period = coregen.period
-        # This test assumes that the period is a power of 2.
-        self.assertIsPowerOfTwo(expected_period)
-
-        half_period = expected_period // 2
-
-        state_start = coregen.state
-        coregen.advance(half_period)
-        state_half = coregen.state
-        coregen.advance(half_period)
-        state_full = coregen.state
-        self.assertEqual(state_start, state_full)
-        self.assertNotEqual(state_start, state_half)
-
     def test_seed_from_integer(self):
-        # XXX Another test of the core generator.
         gen1 = self.gen_class(seed=17289)
         gen2 = self.gen_class(seed=17289)
         gen3 = self.gen_class(seed=17290)
         self.assertEqual(gen1.getstate(), gen2.getstate())
         self.assertNotEqual(gen1.getstate(), gen3.getstate())
-
-    def test_core_generator_an_iterator(self):
-        gen1 = self.gen_class(seed=17289)
-        core_generator = gen1._core_generator
-        self.assertIs(iter(core_generator), core_generator)
-
-    # XXX Need more tests of core generator; move them to separate class.
-
-    def assertIsPowerOfTwo(self, n):
-        """
-        Assert that the given integer is a power of two.
-        """
-        self.assertTrue(
-            n > 0 and n & (n-1) == 0,
-            msg="Expected a power of two, got {}".format(n))
 
     def check_uniform(self, population, sample):
         """

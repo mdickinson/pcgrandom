@@ -15,7 +15,6 @@
 """
 Tests for the PCG_XSH_RR_V0 generator.
 """
-import pkgutil
 import unittest
 
 from pcgrandom import PCG_XSH_RR_V0
@@ -27,25 +26,3 @@ class Test_PCG_XSH_RR_V0(TestRandom, unittest.TestCase):
 
     def setUp(self):
         self.gen = self.gen_class(seed=15206, sequence=1729)
-
-    def test_agrees_with_reference_implementation_explicit_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class(seed=42, sequence=54)
-        coregen = gen._core_generator
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/setseq_xsh_rr_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(coregen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
-
-    def test_agrees_with_reference_implementation_unspecified_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class(seed=123)
-        coregen = gen._core_generator
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/oneseq_xsh_rr_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(coregen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
