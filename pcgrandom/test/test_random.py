@@ -21,6 +21,13 @@ import collections
 import itertools
 import math
 import pickle
+import unittest
+
+from pcgrandom import (
+    PCG_XSH_RR_V0,
+    PCG_XSH_RS_V0,
+    PCG_XSL_RR_V0,
+)
 
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
@@ -40,6 +47,9 @@ class TestRandom(object):
     Mixin class providing tests common to all generators in the
     PCG family.
     """
+    def setUp(self):
+        self.gen = self.gen_class(seed=15206, sequence=1729)
+
     def test_creation_without_seed(self):
         gen1 = self.gen_class()
         gen2 = self.gen_class()
@@ -536,3 +546,15 @@ class TestRandom(object):
             for i in expected
         )
         self.assertLess(stat, chisq_99percentile[len(expected)-1])
+
+
+class Test_PCG_XSH_RR_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSH_RR_V0)
+
+
+class Test_PCG_XSH_RS_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSH_RS_V0)
+
+
+class Test_PCG_XSL_RR_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSL_RR_V0)
