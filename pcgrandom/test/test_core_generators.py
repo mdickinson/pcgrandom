@@ -25,6 +25,22 @@ from pcgrandom.core_generators import (
 )
 
 
+class TestCoreGeneratorFromState(unittest.TestCase):
+    """
+    Tests for core_generator_from_state.
+    """
+    def test_recover_from_state(self):
+        gen = xsh_rr_64_32(sequence=38, multiplier=5)
+        recovered_gen = core_generator_from_state(gen.state)
+        self.assertEqual(recovered_gen.state, gen.state)
+
+    def test_recover_from_nonexistent_entry_point(self):
+        gen = xsh_rr_64_32(sequence=38, multiplier=5)
+        bogus_state = ("bogus",) + gen.state[1:]
+        with self.assertRaises(ValueError):
+            core_generator_from_state(bogus_state)
+
+
 class CoreGeneratorCommonTests(object):
     """
     Tests common to all the core generators, used as a mixin class.
@@ -32,11 +48,11 @@ class CoreGeneratorCommonTests(object):
     def test_name_is_unicode(self):
         self.assertIsInstance(self.gen.name, type(u''))
 
-    def test_set_bad_state(self):
+    def test_recreate_from_bad_state(self):
         state = self.gen.state
         bogus_state = ("bogus",) + state[1:]
         with self.assertRaises(ValueError):
-            self.gen.state = bogus_state
+            type(self.gen).from_state(bogus_state)
 
     def test_recover_core_generator_from_state(self):
         state = self.gen.state

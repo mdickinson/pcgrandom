@@ -107,29 +107,20 @@ class _pcg_core(builtins.object):
         """
         return self.name, self._multiplier, self._increment, self._state
 
-    @state.setter
-    def state(self, state):
-        """
-        Set the internal state of this generator.
-        """
-        # XXX We should probably not allow set operations that change
-        # the multiplier and increment.
-        if state[0] != self.name:
-            raise ValueError(
-                "Setting state of generator with name {!r} from "
-                "a state tuple with incompatible name {!r} ".format(
-                    self.name, state[0])
-            )
-
-        self._multiplier, self._increment, self._state = state[1:]
-
     @classmethod
     def from_state(cls, state):
         """
         Construct generator instance from saved state.
         """
-        self = cls()
-        self.state = state
+        if state[0] != cls.name:
+            raise ValueError(
+                "Setting state of generator with name {!r} from "
+                "a state tuple with incompatible name {!r} ".format(
+                    cls.name, state[0])
+            )
+
+        self = object.__new__(cls)
+        self._multiplier, self._increment, self._state = state[1:]
         return self
 
     def __iter__(self):
