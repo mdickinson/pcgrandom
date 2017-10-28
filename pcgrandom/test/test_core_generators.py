@@ -18,6 +18,7 @@ Tests for the core generators.
 import unittest
 
 from pcgrandom.core_generators import (
+    core_generator_from_state,
     xsh_rr_64_32,
     xsh_rs_64_32,
     xsl_rr_128_64,
@@ -36,6 +37,11 @@ class CoreGeneratorCommonTests(object):
         bogus_state = ("bogus",) + state[1:]
         with self.assertRaises(ValueError):
             self.gen.state = bogus_state
+
+    def test_recover_core_generator_from_state(self):
+        state = self.gen.state
+        recovered_gen = core_generator_from_state(state)
+        self.assertEqual(recovered_gen.state, state)
 
 
 class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):

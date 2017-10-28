@@ -44,12 +44,19 @@ setup(
     ],
     keywords="PCG PRNG RNG random",
     packages=find_packages(),
-    install_requires=["future"],
+    install_requires=["future", "setuptools"],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
     package_data={
         "pcgrandom.test": [
             "data/*.json",
             "data/*.txt",
+        ],
+    },
+    entry_points={
+        "pcgrandom.core_generators": [
+            "xsh_rr_64_32 = pcgrandom.core_generators:xsh_rr_64_32",
+            "xsh_rs_64_32 = pcgrandom.core_generators:xsh_rs_64_32",
+            "xsl_rr_128_64 = pcgrandom.core_generators:xsl_rr_128_64",
         ],
     },
 )

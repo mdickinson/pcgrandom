@@ -24,7 +24,7 @@ import operator
 # Python 2 compatibility.
 from builtins import range
 
-from pcgrandom.core_generators import xsh_rr_64_32
+from pcgrandom.core_generators import core_generator_from_state, xsh_rr_64_32
 from pcgrandom.seeding import seed_from_object
 
 # Constants used for various continuous distributions.
@@ -86,7 +86,8 @@ class Random(object):
                 "setstate() of version {1!r}.".format(
                     state[0], self.VERSION)
             )
-        self._core_generator.state, self.gauss_next = state[1:]
+        core_generator_state, self.gauss_next = state[1:]
+        self._core_generator = core_generator_from_state(core_generator_state)
 
     # Core sampling functions.
 

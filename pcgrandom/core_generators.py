@@ -17,8 +17,8 @@ The core PCG generators, as Python iterables.
 """
 import operator
 
-# Python 2 compatibility (for __next__ handling).
-from builtins import object
+import builtins
+import pkg_resources
 
 
 def _rotate32(v, r, _multiplier=2**32 + 1, _mask=2**32 - 1):
@@ -69,7 +69,7 @@ def _rotate64(v, r, _multiplier=2**64 + 1, _mask=2**64 - 1):
     return (v & _mask) * _multiplier >> r & _mask
 
 
-class _pcg_core(object):
+class _pcg_core(builtins.object):
     """
     Code common to all the PCG core generators.
 
@@ -122,6 +122,15 @@ class _pcg_core(object):
             )
 
         self._multiplier, self._increment, self._state = state[1:]
+
+    @classmethod
+    def from_state(cls, state):
+        """
+        Construct generator instance from saved state.
+        """
+        self = cls()
+        self.state = state
+        return self
 
     def __iter__(self):
         """
@@ -292,3 +301,28 @@ class xsl_rr_128_64(_pcg_core):
         """
         state = self._state
         return _rotate64(state ^ (state >> 64), state >> 122)
+
+
+def core_generator_from_state(state):
+    """
+    Reconstruct a core generator from its state tuple.
+
+    Parameters
+    ----------
+    state : tuple
+        Tuple obtained from the state property of a core generator.
+    """
+    name = state[0]
+
+    entry_points = list(
+        pkg_resources.iter_entry_points(
+            group='pcgrandom.core_generators',
+            name=name,
+        )
+    )
+    if not entry_points:
+        raise ValueError("Unable to find generator with name {}".format(name))
+    # Log a warning if there's more than one?
+    entry_point = entry_points[0]
+    generator_class = entry_point.load()
+    return generator_class.from_state(state)
