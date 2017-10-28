@@ -12,16 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pcgrandom.pcg_xsh_rr_v0 import PCG_XSH_RR_V0
-from pcgrandom.pcg_xsh_rs_v0 import PCG_XSH_RS_V0
-from pcgrandom.pcg_xsl_rr_v0 import PCG_XSL_RR_V0
+from pcgrandom.constructors import (
+    PCG_XSH_RR_V0,
+    PCG_XSH_RS_V0,
+    PCG_XSL_RR_V0,
+)
+from pcgrandom.core_generators import (
+    xsh_rr_64_32,
+    xsh_rs_64_32,
+    xsl_rr_128_64,
+)
+from pcgrandom.random import Random
+
 
 __all__ = [
-    # Generators.
+    # Convenience functions for creating Random instances
+    # with particular core generators.
     "PCG_XSH_RR_V0", "PCG_XSH_RS_V0", "PCG_XSL_RR_V0",
 
     # Generator synonyms.
     "PCG32", "PCG64", "Random",
+
+    # Core generators.
+    "xsh_rr_64_32", "xsh_rs_64_32", "xsl_rr_128_64",
 
     # List of all generators (not including synonyms).
     "pcg_generators",
@@ -51,7 +64,6 @@ pcg_generators = [PCG_XSH_RR_V0, PCG_XSH_RS_V0, PCG_XSL_RR_V0]
 # be updated over time to point to later versions of the same generators, or
 # possibly even to different generators. In situations where reproducibility
 # matters, avoid the synonyms and use the explicit generator name.
-Random = PCG_XSH_RR_V0
 PCG32 = PCG_XSH_RR_V0
 PCG64 = PCG_XSL_RR_V0
 

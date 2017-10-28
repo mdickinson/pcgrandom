@@ -21,6 +21,13 @@ import collections
 import itertools
 import math
 import pickle
+import unittest
+
+from pcgrandom import (
+    PCG_XSH_RR_V0,
+    PCG_XSH_RS_V0,
+    PCG_XSL_RR_V0,
+)
 
 
 # 99% values of the chi-squared statistic used in the goodness-of-fit tests
@@ -35,11 +42,14 @@ chisq_99percentile = {
 }
 
 
-class TestPCGCommon(object):
+class TestRandom(object):
     """
     Mixin class providing tests common to all generators in the
     PCG family.
     """
+    def setUp(self):
+        self.gen = self.gen_class(seed=15206, sequence=1729)
+
     def test_creation_without_seed(self):
         gen1 = self.gen_class()
         gen2 = self.gen_class()
@@ -54,40 +64,12 @@ class TestPCGCommon(object):
     def test_creation_with_seed_and_sequence(self):
         gen1 = self.gen_class(seed=12345, sequence=1)
         gen2 = self.gen_class(12345, sequence=2)
-        # Regression test for mdickinson/pcgrandom#25.
-        gen3 = self.gen_class(12345, 1)
         self.assertNotEqual(gen1.getstate(), gen2.getstate())
-        self.assertEqual(gen1.getrandbits(64), gen3.getrandbits(64))
-
-    def test_seed_from_integer(self):
-        gen1 = self.gen_class(seed=17289)
-        gen2 = self.gen_class(seed=17289 + 2**self.gen_class._state_bits)
-        gen3 = self.gen_class(seed=17289 - 2**self.gen_class._state_bits)
-        self.assertEqual(gen1.getstate(), gen2.getstate())
-        self.assertEqual(gen1.getstate(), gen3.getstate())
 
     def test_seed_from_buffer(self):
         gen1 = self.gen_class(seed=b"your mother was a hamster")
         gen2 = self.gen_class(seed=bytearray(b"your mother was a hamster"))
         self.assertEqual(gen1.getstate(), gen2.getstate())
-
-    def test_sequence_default(self):
-        gen = self.gen_class(seed=12345)
-        self.assertEqual(gen._increment, gen._default_increment)
-
-    def test_specification_of_multiplier(self):
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        for _ in range(10):
-            old_state = gen._state
-            gen._step_state()
-            new_state = gen._state
-            self.assertEqual(
-                new_state,
-                (old_state * 5 + gen._increment) % (2**gen._state_bits)
-            )
-
-    def test_version_is_unicode(self):
-        self.assertIsInstance(self.gen.VERSION, type(u''))
 
     def test_pickleability(self):
         for protocol in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -100,50 +82,6 @@ class TestPCGCommon(object):
                 recovered_gen.getstate(),
             )
             self.assertEqual(words, new_words)
-
-    def test_direct_generator_output(self):
-        # Direct test of _next_output method.
-        nsamples = 10000
-        output_size = self.gen._output_bits
-        samples = [self.gen._next_output() for _ in range(nsamples)]
-
-        # Check that all samples are in the expected range.
-        self.assertLessEqual(0, min(samples))
-        self.assertLess(max(samples), 2**output_size)
-
-        # Count number of times individual bits have appeared.
-        counts = {}
-        for bitpos in range(output_size):
-            bit = 2**bitpos
-            counts[bitpos] = sum(1 for sample in samples if (sample & bit))
-
-        # Assuming that each bit is "fair", each count roughly follows a normal
-        # distribution with mean 0.5*nsamples and standard deviation
-        # 0.5*sqrt(nsamples). We'll call a count bad if it's more than 3
-        # standard deviations from the mean.
-        bad_counts = sum(
-            abs(count - 0.5*nsamples) > 1.5*math.sqrt(nsamples)
-            for count in counts.values()
-        )
-
-        # There's about a 1 in 370 chance of any one count being bad,
-        # and the counts should be independent. To be safe, we allow
-        # up to three bad counts before failing.
-        self.assertLessEqual(bad_counts, 3)
-
-    def test_state_includes_multiplier(self):
-        gen = self.gen_class(seed=123, sequence=0, multiplier=5)
-        state = gen.getstate()
-        words = [gen._next_output() for _ in range(10)]
-
-        gen2 = self.gen_class()
-        gen2.setstate(state)
-        same_again = [gen2._next_output() for _ in range(10)]
-        self.assertEqual(words, same_again)
-
-    def test_bad_multiplier(self):
-        with self.assertRaises(ValueError):
-            self.gen_class(seed=123, sequence=0, multiplier=7)
 
     def test_independent_sequences(self):
         # Crude statistical test for lack of correlation. If X and Y are
@@ -211,54 +149,24 @@ class TestPCGCommon(object):
         samples3 = [self.gen.random() for _ in range(10)]
         self.assertEqual(samples2, samples3)
 
-    def test_jumpahead(self):
-        # Generate samples, each sample consuming exactly one output
-        # from the core generator.
-        original_state = self.gen.getstate()
-        samples = [self.gen._next_output() for _ in range(1000)]
-
-        # Rewind, check we can produce the exact same samples.
-        self.gen.jumpahead(-1000)
-        same_again = [self.gen._next_output() for _ in range(1000)]
-        self.assertEqual(samples, same_again)
-
-        # Now jump around randomly within the collection of samples,
-        # and check we can reproduce them.
-        positions = [self.gen.randrange(1000) for _ in range(1000)]
-
-        self.gen.setstate(original_state)
-        current_pos = 0
-        for next_pos in positions:
-            self.gen.jumpahead(next_pos - current_pos)
-            sample = self.gen._next_output()
-            self.assertEqual(sample, samples[next_pos])
-            current_pos = next_pos + 1
-
     def test_jumpahead_zero(self):
         # Corner case: jumpahead(0) should work.
         state = self.gen.getstate()
         self.gen.jumpahead(0)
         self.assertEqual(self.gen.getstate(), state)
 
-    def test_invertible(self):
-        gen = self.gen_class(seed=12345)
-        state = gen.getstate()
-        gen.jumpahead(-1)
-        gen._next_output()
-        self.assertEqual(gen.getstate(), state)
+    def test_jumpahead_additive(self):
+        original_state = self.gen.getstate()
 
-    def test_full_period(self):
-        gen = self.gen_class(seed=12345)
-        expected_period = 2**gen._state_bits
-        half_period = expected_period // 2
+        self.gen.jumpahead(32)
+        self.gen.jumpahead(117)
+        state_separate = self.gen.getstate()
 
-        state_start = gen.getstate()
-        gen.jumpahead(half_period)
-        state_half = gen.getstate()
-        gen.jumpahead(half_period)
-        state_full = gen.getstate()
-        self.assertEqual(state_start, state_full)
-        self.assertNotEqual(state_start, state_half)
+        self.gen.setstate(original_state)
+        self.gen.jumpahead(149)
+        state_together = self.gen.getstate()
+
+        self.assertEqual(state_separate, state_together)
 
     def test_state_preserves_gauss(self):
         # Test a state with gauss_next = None
@@ -571,6 +479,29 @@ class TestPCGCommon(object):
         binned_sample = [int(13*x) for x in sample]
         self.check_uniform(range(13), binned_sample)
 
+    def test_specification_of_parameters(self):
+        gen1 = self.gen_class(seed=123, sequence=0, multiplier=5)
+        gen2 = self.gen_class(seed=123, sequence=0)
+        gen3 = self.gen_class(seed=123, sequence=0, multiplier=5)
+        gen4 = self.gen_class(seed=123, multiplier=5)
+
+        seq1 = [gen1.randrange(1000) for _ in range(10)]
+        seq2 = [gen2.randrange(1000) for _ in range(10)]
+        seq3 = [gen3.randrange(1000) for _ in range(10)]
+        seq4 = [gen4.randrange(1000) for _ in range(10)]
+
+        self.assertNotEqual(seq1, seq2)
+        self.assertEqual(seq1, seq3)
+        self.assertNotEqual(seq1, seq4)
+        self.assertNotEqual(seq2, seq4)
+
+    def test_seed_from_integer(self):
+        gen1 = self.gen_class(seed=17289)
+        gen2 = self.gen_class(seed=17289)
+        gen3 = self.gen_class(seed=17290)
+        self.assertEqual(gen1.getstate(), gen2.getstate())
+        self.assertNotEqual(gen1.getstate(), gen3.getstate())
+
     def check_uniform(self, population, sample):
         """
         Check uniformity via a chi-squared test with p-value 0.99.
@@ -615,3 +546,15 @@ class TestPCGCommon(object):
             for i in expected
         )
         self.assertLess(stat, chisq_99percentile[len(expected)-1])
+
+
+class Test_PCG_XSH_RR_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSH_RR_V0)
+
+
+class Test_PCG_XSH_RS_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSH_RS_V0)
+
+
+class Test_PCG_XSL_RR_V0(TestRandom, unittest.TestCase):
+    gen_class = staticmethod(PCG_XSL_RR_V0)

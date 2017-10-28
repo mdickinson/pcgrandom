@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
-Mixin class providing various distributions.
+Drop-in replacement for random.Random, with pluggable core generator.
 """
-# The methods in this class are copied almost verbatim from Python's random
-# module.
 from __future__ import division
 
 import bisect
@@ -24,43 +21,114 @@ import collections
 from math import acos, cos, e, exp, log, pi, sin, sqrt
 import operator
 
+# Python 2 compatibility.
 from builtins import range
 
+from pcgrandom.core_generators import core_generator_from_state, xsh_rr_64_32
+from pcgrandom.seeding import seed_from_object
 
+# Constants used for various continuous distributions.
 NV_MAGICCONST = 4 * exp(-0.5)/sqrt(2.0)
 TWOPI = 2.0*pi
 LOG4 = log(4.0)
 SG_MAGICCONST = 1.0 + log(4.5)
 
 
-class Distributions(object):
+class Random(object):
     """
-    Mixin class to be used with a PRNG, providing various distributions.
-    The class also manages the state held in self.gauss_next.
+    Drop-in replacement for random.Random, with pluggable core generator.
 
-    The target class for this mixin should provide the core generator
-    methods ``random`` and ``_randbelow``.
+    The core generator defaults to the 32-bit PCG implementation recommended in
+    the PCG paper.
+
+    Parameters
+    ----------
+    seed : integer-like, bytes-like, or None; optional
+        Python object to use to seed the generator. May be an integer-like
+        object (something supporting the __index__ method), a bytes-like object
+        (anything supporting the buffer protocol), or None. If no seed is given
+        (or None is explicitly specified), the core generator is seeded from
+        system entropy.
+    core_generator : object, optional
+        Object providing the core generator. Supports the iterator
+        protocol, along with various other methods. The default core
+        generator is xsh_rr_64_32 ("pcg32").
     """
-    # State management
+    VERSION = u"pcgrandom.Random"
 
-    def _initial_distribution_state(self):
-        """
-        Initial distribution-related state.
-        """
-        return None
+    def __init__(self, seed=None, core_generator=None):
+        if core_generator is None:
+            core_generator = xsh_rr_64_32()
+        self._core_generator = core_generator
+        self.seed(seed)
 
-    def _get_distribution_state(self):
-        """
-        Get object representing any currently stored state
-        related to the distributions.
-        """
-        return self.gauss_next
+    def seed(self, seed=None):
+        """(Re)initialize internal state from integer or string object."""
+        integer_seed = seed_from_object(seed, self._core_generator.seed_bits)
+        self._core_generator.seed(integer_seed)
+        self.gauss_next = None
 
-    def _set_distribution_state(self, state):
+    def jumpahead(self, n):
+        """Jump ahead or back in the sequence of random numbers."""
+        self._core_generator.advance(n)
+
+    # State management.
+
+    def getstate(self):
+        """Return internal state; can be passed to setstate() later."""
+        return self.VERSION, self._core_generator.state, self.gauss_next
+
+    def setstate(self, state):
+        """Restore internal state from object returned by getstate()."""
+        if state[0] != self.VERSION:
+            raise ValueError(
+                "State with version {0!r} passed to "
+                "setstate() of version {1!r}.".format(
+                    state[0], self.VERSION)
+            )
+        core_generator_state, self.gauss_next = state[1:]
+        self._core_generator = core_generator_from_state(core_generator_state)
+
+    # Core sampling functions.
+
+    def _randbelow(self, n):
+        """Return a random integer in range(n)."""
+        output_bits = self._core_generator.output_bits
+        # Invariant: x is uniformly distributed in range(h).
+        x, h = 0, 1
+        while True:
+            q, r = divmod(h, n)
+            if r <= x:
+                # int call converts small longs to ints on Python 2.
+                return int((x - r) // q)
+            output = next(self._core_generator)
+            x, h = x << output_bits | output, r << output_bits
+
+    def getrandbits(self, k):
+        """Generate an integer in the range [0, 2**k).
+
+        Parameters
+        ----------
+        k : nonnegative integer
+
         """
-        Set a state obtained from _get_distribution_state.
-        """
-        self.gauss_next = state
+        k = operator.index(k)
+        if k < 0:
+            raise ValueError("Number of bits should be nonnegative.")
+
+        output_bits = self._core_generator.output_bits
+
+        numwords, excess_bits = -(-k // output_bits), -k % output_bits
+        acc = 0
+        for _ in range(numwords):
+            output = next(self._core_generator)
+            acc = acc << output_bits | output
+        # int call converts small longs to ints on Python 2.
+        return int(acc >> excess_bits)
+
+    def random(self):
+        """Get the next random number in the range [0.0, 1.0)."""
+        return self.getrandbits(53)/9007199254740992
 
     # Integer distributions
 

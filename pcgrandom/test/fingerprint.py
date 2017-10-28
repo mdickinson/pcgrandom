@@ -19,8 +19,6 @@ Utilities to create the generator_fingerprints.json file.
 import contextlib
 import json
 
-from pcgrandom import pcg_generators
-
 
 CARD_SUITS = ['Spades', 'Hearts', 'Diamonds', 'Clubs']
 CARD_VALUES = [
@@ -31,13 +29,6 @@ CARDS = [
     '{} of {}'.format(value, suit)
     for suit in CARD_SUITS for value in CARD_VALUES
 ]
-
-
-# Mapping from version strings to corresponding classes.
-generator_class = {
-    genclass.VERSION: genclass
-    for genclass in pcg_generators
-}
 
 
 def construct_generator(constructor):
