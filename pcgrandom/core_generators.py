@@ -105,7 +105,7 @@ class _pcg_core(object):
         """
         Tuple that encapsulates the state of this generator.
         """
-        return self.VERSION, self._multiplier, self._increment, self._state
+        return self.name, self._multiplier, self._increment, self._state
 
     @state.setter
     def state(self, state):
@@ -114,11 +114,11 @@ class _pcg_core(object):
         """
         # XXX We should probably not allow set operations that change
         # the multiplier and increment.
-        if state[0] != self.VERSION:
+        if state[0] != self.name:
             raise ValueError(
-                "Setting state of generator with version {!r} from "
-                "a state tuple with incompatible version {!r} ".format(
-                    self.VERSION, state[0])
+                "Setting state of generator with name {!r} from "
+                "a state tuple with incompatible name {!r} ".format(
+                    self.name, state[0])
             )
 
         self._multiplier, self._increment, self._state = state[1:]
@@ -182,8 +182,9 @@ class xsh_rr_64_32(_pcg_core):
     """
     Corresponds to the xsh_rr_64_32 family in the C++ implementation.
     """
-    # Version specifier, for use in pickling and state operations.
-    VERSION = u"pcgrandom.xsh_rr_64_32"
+    # Identifying name for generator. Used in entry-points and
+    # when reconstructing a generator from its state tuple.
+    name = u"xsh_rr_64_32"
 
     # Number of bits expected for the seed value.
     seed_bits = 64
@@ -220,8 +221,9 @@ class xsh_rs_64_32(_pcg_core):
     """
     Corresponds to the xsh_rs_64_32 family in the C++ implementation.
     """
-    # Version specifier, for use in pickling and state operations.
-    VERSION = u"pcgrandom.xsh_rs_64_32"
+    # Identifying name for generator. Used in entry-points and
+    # when reconstructing a generator from its state tuple.
+    name = u"xsh_rs_64_32"
 
     # Number of bits expected for the seed value.
     seed_bits = 64
@@ -258,8 +260,9 @@ class xsl_rr_128_64(_pcg_core):
     """
     Corresponds to the xsl_rr_128_64 family in the C++ implementation.
     """
-    # Version specifier, for use in pickling and state operations.
-    VERSION = u"pcgrandom.xsl_rr_128_64"
+    # Identifying name for generator. Used in entry-points and
+    # when reconstructing a generator from its state tuple.
+    name = u"xsl_rr_128_64"
 
     # Number of bits expected for the seed value.
     seed_bits = 128

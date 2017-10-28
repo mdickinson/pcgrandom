@@ -28,6 +28,9 @@ class CoreGeneratorCommonTests(object):
     """
     Tests common to all the core generators, used as a mixin class.
     """
+    def test_name_is_unicode(self):
+        self.assertIsInstance(self.gen.name, type(u''))
+
     def test_set_bad_state(self):
         state = self.gen.state
         bogus_state = ("bogus",) + state[1:]
