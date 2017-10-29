@@ -68,7 +68,9 @@ class Random(object):
         """(Re)initialize internal state from integer or string object."""
         integer_seed = seed_from_object(
             seed, self._core_generator.seed_bits)
-        self._stream = self._core_generator.stream_from_seed(integer_seed)
+        stream_state = self._core_generator.state_from_seed(integer_seed)
+
+        self._stream = self._core_generator.stream(stream_state)
         self.gauss_next = None
 
     def jumpahead(self, n):
@@ -98,7 +100,7 @@ class Random(object):
         core_generator_description, stream_state, gauss_next = state[1:]
         self._core_generator = generator_from_description(
             core_generator_description)
-        self._stream = self._core_generator.stream_from_state(stream_state)
+        self._stream = self._core_generator.stream(stream_state)
         self.gauss_next = gauss_next
 
     # Core sampling functions.

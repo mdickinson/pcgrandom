@@ -91,13 +91,38 @@ class _pcg_generator_base(object):
         self._multiplier, self._increment = description[1:]
         return self
 
-    def stream_from_seed(self, seed):
+    def state_from_seed(self, seed):
+        """
+        Get stream state from an integer seed.
+
+        Parameters
+        ----------
+        seed : integer
+            Seed value.
+
+        Returns
+        -------
+        state : object
+            State suitable for initialising the core stream.
+        """
         # Initial state value matches that in the reference PCG implementation.
         multiplier, increment = self._multiplier, self._increment
-        state = (increment + seed) * multiplier + increment & self._state_mask
-        return self.stream_from_state(state)
+        return (increment + seed) * multiplier + increment & self._state_mask
 
-    def stream_from_state(self, state):
+    def stream(self, state):
+        """
+        Return a stream generator initialised from the given state.
+
+        Parameters
+        ----------
+        state : object
+            Stream state.
+
+        Returns
+        -------
+        stream : iterator
+            Output stream.
+        """
         return self.stream_class(self._multiplier, self._increment, state)
 
 

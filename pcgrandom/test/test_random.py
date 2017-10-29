@@ -570,7 +570,7 @@ class TestRandomGenerator(unittest.TestCase):
     """
     General tests of the Random class, not tied to a specific generator.
     """
-    def test_restore_state_from_different_generator_factory(self):
+    def test_restore_state_from_different_generator(self):
         gen1 = Random(
             seed=123,
             core_generator=xsh_rr_64_32(),

@@ -32,16 +32,14 @@ class TestCoreGeneratorFromState(unittest.TestCase):
     Tests for core_generator_from_state.
     """
     def test_recover_from_description(self):
-        gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
-        recovered_factory = generator_from_description(
-            gen_factory.description)
-        self.assertEqual(
-            recovered_factory.description, gen_factory.description)
-        self.assertEqual(type(recovered_factory), type(gen_factory))
+        generator = xsh_rr_64_32(sequence=38, multiplier=13)
+        recovered = generator_from_description(generator.description)
+        self.assertEqual(recovered.description, generator.description)
+        self.assertEqual(type(recovered), type(generator))
 
     def test_recover_from_nonexistent_entry_point(self):
-        gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
-        bogus_description = ("bogus",) + gen_factory.description[1:]
+        generator = xsh_rr_64_32(sequence=38, multiplier=13)
+        bogus_description = ("bogus",) + generator.description[1:]
         with self.assertRaises(ValueError):
             generator_from_description(bogus_description)
 
@@ -51,22 +49,23 @@ class CoreGeneratorCommonTests(object):
     Tests common to all the core generators, used as a mixin class.
     """
     def setUp(self):
-        self.gen = self.gen_factory_class().stream_from_seed(seed=71)
+        self.generator = self.generator_class()
+        self.stream = self.generator.stream(
+            self.generator.state_from_seed(seed=71))
 
     def test_name_is_unicode(self):
-        self.assertIsInstance(self.gen_factory_class().name, type(u''))
+        self.assertIsInstance(self.generator.name, type(u''))
 
     def test_recreate_from_bad_description(self):
-        factory = self.gen_factory_class()
-        description = factory.description
-        self.assertEqual(description[0], factory.name)
+        description = self.generator.description
+        self.assertEqual(description[0], self.generator.name)
         bogus_description = ("bogus",) + description[1:]
         with self.assertRaises(ValueError):
-            self.gen_factory_class.from_description(bogus_description)
+            self.generator.from_description(bogus_description)
 
     def test_direct_generator_output(self):
-        output_size = self.gen_factory_class().output_bits
-        coregen = self.gen
+        output_size = self.generator.output_bits
+        coregen = self.stream
 
         nsamples = 10000
         samples = [next(coregen) for _ in range(nsamples)]
@@ -97,54 +96,90 @@ class CoreGeneratorCommonTests(object):
 
     def test_bad_multiplier(self):
         with self.assertRaises(ValueError):
-            self.gen_factory_class(sequence=0, multiplier=7)
+            self.generator_class(sequence=0, multiplier=7)
 
     def test_advance(self):
-        samples = [next(self.gen) for _ in range(1000)]
+        original_state = self.stream.state
+
+        samples = [next(self.stream) for _ in range(1000)]
 
         # Rewind, check we can produce the exact same samples.
-        self.gen.advance(-1000)
-        same_again = [next(self.gen) for _ in range(1000)]
+        self.stream.advance(-1000)
+        same_again = [next(self.stream) for _ in range(1000)]
         self.assertEqual(samples, same_again)
 
         # Now jump around randomly within the collection of samples,
         # and check we can reproduce them.
-        positions = [next(self.gen) % 1000 for _ in range(1000)]
+        positions = [next(self.stream) % 1000 for _ in range(1000)]
 
-        gen = self.gen_factory_class().stream_from_seed(seed=71)
+        stream = self.generator.stream(original_state)
         current_pos = 0
         for next_pos in positions:
-            gen.advance(next_pos - current_pos)
-            sample = next(gen)
-            self.assertEqual(sample, samples[next_pos])
+            stream.advance(next_pos - current_pos)
+            self.assertEqual(next(stream), samples[next_pos])
             current_pos = next_pos + 1
 
-    def test_advance_invertible(self):
-        state = self.gen.state
-        self.gen.advance(-1)
-        next(self.gen)
-        self.assertEqual(self.gen.state, state)
+    def test_advance_negative_one(self):
+        state = self.stream.state
+        self.stream.advance(-1)
+        next(self.stream)
+        self.assertEqual(self.stream.state, state)
+
+    def test_advance_zero(self):
+        state = self.stream.state
+        self.stream.advance(0)
+        self.assertEqual(self.stream.state, state)
+
+    def test_advance_one(self):
+        original_state = self.stream.state
+        self.stream.advance(1)
+        next_state = self.stream.state
+
+        stream = self.generator.stream(original_state)
+        next(stream)
+        self.assertEqual(stream.state, next_state)
 
     def test_full_period(self):
-        factory = self.gen_factory_class
-        coregen = self.gen
-
-        expected_period = factory.period
+        expected_period = self.generator.period
         # This test assumes that the period is a power of 2.
         self.assertIsPowerOfTwo(expected_period)
 
         half_period = expected_period // 2
 
-        state_start = coregen.state
-        coregen.advance(half_period)
-        state_half = coregen.state
-        coregen.advance(half_period)
-        state_full = coregen.state
+        state_start = self.stream.state
+        self.stream.advance(half_period)
+        state_half = self.stream.state
+        self.stream.advance(half_period)
+        state_full = self.stream.state
         self.assertEqual(state_start, state_full)
         self.assertNotEqual(state_start, state_half)
 
     def test_iterator(self):
-        self.assertIs(iter(self.gen), self.gen)
+        self.assertIs(iter(self.stream), self.stream)
+
+    def test_agrees_with_reference_implementation_explicit_sequence(self):
+        # Comparison with the C++ PCG reference implementation, version 0.98.
+        generator = self.generator_class(sequence=54)
+        stream = generator.stream(generator.state_from_seed(42))
+
+        datafile = "data/setseq_{}.txt".format(generator.name)
+        expected_raw = pkgutil.get_data('pcgrandom.test', datafile)
+        expected_words = expected_raw.decode('utf-8').splitlines(False)
+        word_format = "#0{}x".format(2 + generator.output_bits // 4)
+        actual_words = [format(next(stream), word_format) for _ in range(32)]
+        self.assertEqual(actual_words, expected_words)
+
+    def test_agrees_with_reference_implementation_unspecified_sequence(self):
+        # Comparison with the C++ PCG reference implementation, version 0.98.
+        generator = self.generator_class()
+        stream = generator.stream(generator.state_from_seed(123))
+
+        datafile = "data/oneseq_{}.txt".format(generator.name)
+        expected_raw = pkgutil.get_data('pcgrandom.test', datafile)
+        expected_words = expected_raw.decode('utf-8').splitlines(False)
+        word_format = "#0{}x".format(2 + generator.output_bits // 4)
+        actual_words = [format(next(stream), word_format) for _ in range(32)]
+        self.assertEqual(actual_words, expected_words)
 
     def assertIsPowerOfTwo(self, n):
         """
@@ -159,84 +194,18 @@ class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsh_rr_64_32 generator.
     """
-    gen_factory_class = xsh_rr_64_32
-
-    def test_agrees_with_reference_implementation_explicit_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class(sequence=54)
-        gen = factory.stream_from_seed(42)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/setseq_xsh_rr_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
-
-    def test_agrees_with_reference_implementation_unspecified_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class()
-        gen = factory.stream_from_seed(123)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/oneseq_xsh_rr_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
+    generator_class = xsh_rr_64_32
 
 
 class TestXshRS6432(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsh_rs_64_32 generator.
     """
-    gen_factory_class = xsh_rs_64_32
-
-    def test_agrees_with_reference_implementation_explicit_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class(sequence=54)
-        gen = factory.stream_from_seed(42)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/setseq_xsh_rs_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
-
-    def test_agrees_with_reference_implementation_unspecified_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class()
-        gen = factory.stream_from_seed(123)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/oneseq_xsh_rs_64_32.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#010x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
+    generator_class = xsh_rs_64_32
 
 
 class TestXslRR12864(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsl_rr_128_64 generator.
     """
-    gen_factory_class = xsl_rr_128_64
-
-    def test_agrees_with_reference_implementation_explicit_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class(sequence=54)
-        gen = factory.stream_from_seed(42)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/setseq_xsl_rr_128_64.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#018x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
-
-    def test_agrees_with_reference_implementation_unspecified_sequence(self):
-        # Comparison with the C++ PCG reference implementation, version 0.98.
-        factory = self.gen_factory_class()
-        gen = factory.stream_from_seed(123)
-
-        expected_raw = pkgutil.get_data(
-            'pcgrandom.test', 'data/oneseq_xsl_rr_128_64.txt')
-        expected_words = expected_raw.decode('utf-8').splitlines(False)
-        actual_words = [format(next(gen), '#018x') for _ in range(32)]
-        self.assertEqual(actual_words, expected_words)
+    generator_class = xsl_rr_128_64
