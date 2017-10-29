@@ -62,15 +62,13 @@ class Random(object):
     def __init__(self, seed=None, core_generator_factory=None):
         if core_generator_factory is None:
             core_generator_factory = xsh_rr_64_32_factory()
-
-        integer_seed = seed_from_object(seed, core_generator_factory.seed_bits)
-        self._core_generator = core_generator_factory(integer_seed)
-        self.gauss_next = None
+        self._core_generator_factory = core_generator_factory
+        self.seed(seed)
 
     def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
-        integer_seed = seed_from_object(seed, self._core_generator.seed_bits)
-        self._core_generator.seed(integer_seed)
+        integer_seed = seed_from_object(seed, self._core_generator_factory.seed_bits)
+        self._core_generator = self._core_generator_factory(integer_seed)
         self.gauss_next = None
 
     def jumpahead(self, n):
