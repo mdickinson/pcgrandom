@@ -317,3 +317,83 @@ def core_generator_from_state(state):
     entry_point = entry_points[0]
     generator_class = entry_point.load()
     return generator_class.from_state(state)
+
+
+class _pcg_factory(object):
+    def __init__(self, sequence=None, multiplier=None):
+        if multiplier is None:
+            self._multiplier = self._default_multiplier
+        else:
+            self._multiplier = operator.index(multiplier) & self._state_mask
+        if self._multiplier % 4 != 1:
+            raise ValueError("LCG multiplier must be of the form 4k+1")
+
+        if sequence is None:
+            self._increment = self._default_increment
+        else:
+            self._increment = 2*operator.index(sequence) + 1 & self._state_mask
+
+
+class xsh_rr_64_32_factory(_pcg_factory):
+    # Number of bits expected for the seed value.
+    seed_bits = 64
+
+    # Multiplier reportedly used by Knuth for the MMIX LCG. Same as the
+    # value used in the PCG reference implementation.
+    _default_multiplier = 6364136223846793005
+
+    # Increment reportedly used by Knuth for the MMIX LCG. Same as the
+    # value used in the PCG reference implementation.
+    _default_increment = 1442695040888963407
+
+    # Mask used for internal computations.
+    _state_mask = ~(~0 << 64)
+
+    def __call__(self, seed):
+        state = xsh_rr_64_32.name, self._multiplier, self._increment, 0
+        gen = xsh_rr_64_32.from_state(state)
+        gen.seed(seed)
+        return gen
+
+
+class xsh_rs_64_32_factory(_pcg_factory):
+    # Number of bits expected for the seed value.
+    seed_bits = 64
+
+    # Multiplier reportedly used by Knuth for the MMIX LCG. Same as the
+    # value used in the PCG reference implementation.
+    _default_multiplier = 6364136223846793005
+
+    # Increment reportedly used by Knuth for the MMIX LCG. Same as the
+    # value used in the PCG reference implementation.
+    _default_increment = 1442695040888963407
+
+    # Mask used for internal computations.
+    _state_mask = ~(~0 << 64)
+
+    def __call__(self, seed):
+        state = xsh_rs_64_32.name, self._multiplier, self._increment, 0
+        gen = xsh_rs_64_32.from_state(state)
+        gen.seed(seed)
+        return gen
+
+
+class xsl_rr_128_64_factory(_pcg_factory):
+    # Number of bits expected for the seed value.
+    seed_bits = 128
+
+    # Multiplier from Table 4 of L'Ecuyer's paper. Same as the value
+    # used in the PCG reference implementation.
+    _default_multiplier = 47026247687942121848144207491837523525
+
+    # Default increment from the PCG reference implementation.
+    _default_increment = 117397592171526113268558934119004209487
+
+    # Mask used for internal computations.
+    _state_mask = ~(~0 << 128)
+
+    def __call__(self, seed):
+        state = xsl_rr_128_64.name, self._multiplier, self._increment, 0
+        gen = xsl_rr_128_64.from_state(state)
+        gen.seed(seed)
+        return gen

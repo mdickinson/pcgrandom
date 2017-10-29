@@ -24,7 +24,10 @@ import operator
 # Python 2 compatibility.
 from builtins import range
 
-from pcgrandom.core_generators import core_generator_from_state, xsh_rr_64_32
+from pcgrandom.core_generators import (
+    core_generator_from_state,
+    xsh_rr_64_32_factory,
+)
 from pcgrandom.seeding import seed_from_object
 
 # Constants used for various continuous distributions.
@@ -56,11 +59,13 @@ class Random(object):
     """
     VERSION = u"pcgrandom.Random"
 
-    def __init__(self, seed=None, core_generator=None):
-        if core_generator is None:
-            core_generator = xsh_rr_64_32()
-        self._core_generator = core_generator
-        self.seed(seed)
+    def __init__(self, seed=None, core_generator_factory=None):
+        if core_generator_factory is None:
+            core_generator_factory = xsh_rr_64_32_factory()
+
+        integer_seed = seed_from_object(seed, core_generator_factory.seed_bits)
+        self._core_generator = core_generator_factory(integer_seed)
+        self.gauss_next = None
 
     def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
