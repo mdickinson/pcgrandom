@@ -53,9 +53,8 @@ class Random(object):
         (or None is explicitly specified), the core generator is seeded from
         system entropy.
     core_generator : object, optional
-        Object providing the core generator. Supports the iterator
-        protocol, along with various other methods. The default core
-        generator is xsh_rr_64_32 ("pcg32").
+        Object providing the core generator. The default generator
+        is xsh_rr_64_32 ("pcg32").
     """
     VERSION = u"pcgrandom.Random"
 
@@ -80,11 +79,12 @@ class Random(object):
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
-
-        core_generator_state = (
-            self._core_generator.description +
-            (self._stream.state,))
-        return self.VERSION, core_generator_state, self.gauss_next
+        return (
+            self.VERSION,
+            self._core_generator.description,
+            self._stream.state,
+            self.gauss_next,
+        )
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
@@ -95,16 +95,11 @@ class Random(object):
                     state[0], self.VERSION)
             )
 
-        core_generator_state, self.gauss_next = state[1:]
-
-        description = core_generator_state[:-1]
-        generator_state = core_generator_state[-1]
-
+        core_generator_description, stream_state, gauss_next = state[1:]
         self._core_generator = generator_factory_from_description(
-            description)
-        self._stream = (
-            self._core_generator.generator_from_state(generator_state)
-        )
+            core_generator_description)
+        self._stream = self._core_generator.generator_from_state(stream_state)
+        self.gauss_next = gauss_next
 
     # Core sampling functions.
 
