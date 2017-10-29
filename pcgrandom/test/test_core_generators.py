@@ -20,7 +20,7 @@ import pkgutil
 import unittest
 
 from pcgrandom.core_generators import (
-    core_generator_from_state,
+    generator_factory_from_description,
     xsh_rr_64_32,
     xsh_rs_64_32,
     xsl_rr_128_64,
@@ -31,16 +31,19 @@ class TestCoreGeneratorFromState(unittest.TestCase):
     """
     Tests for core_generator_from_state.
     """
-    def test_recover_from_state(self):
-        gen = xsh_rr_64_32(sequence=38, multiplier=5)
-        recovered_gen = core_generator_from_state(gen.state)
-        self.assertEqual(recovered_gen.state, gen.state)
+    def test_recover_from_description(self):
+        gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
+        recovered_factory = generator_factory_from_description(
+            gen_factory.description)
+        self.assertEqual(
+            recovered_factory.description, gen_factory.description)
+        self.assertEqual(type(recovered_factory), type(gen_factory))
 
     def test_recover_from_nonexistent_entry_point(self):
-        gen = xsh_rr_64_32(sequence=38, multiplier=5)
-        bogus_state = ("bogus",) + gen.state[1:]
+        gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
+        bogus_description = ("bogus",) + gen_factory.description[1:]
         with self.assertRaises(ValueError):
-            core_generator_from_state(bogus_state)
+            generator_factory_from_description(bogus_description)
 
 
 class CoreGeneratorCommonTests(object):
@@ -48,27 +51,24 @@ class CoreGeneratorCommonTests(object):
     Tests common to all the core generators, used as a mixin class.
     """
     def setUp(self):
-        self.gen = self.gen_class()
+        self.gen = self.gen_factory_class()(seed=71)
 
     def test_name_is_unicode(self):
-        self.assertIsInstance(self.gen.name, type(u''))
+        self.assertIsInstance(self.gen_factory_class().name, type(u''))
 
-    def test_recreate_from_bad_state(self):
-        state = self.gen.state
-        bogus_state = ("bogus",) + state[1:]
+    def test_recreate_from_bad_description(self):
+        factory = self.gen_factory_class()
+        description = factory.description
+        self.assertEqual(description[0], factory.name)
+        bogus_description = ("bogus",) + description[1:]
         with self.assertRaises(ValueError):
-            type(self.gen).from_state(bogus_state)
-
-    def test_recover_core_generator_from_state(self):
-        state = self.gen.state
-        recovered_gen = core_generator_from_state(state)
-        self.assertEqual(recovered_gen.state, state)
+            self.gen_factory_class.from_description(bogus_description)
 
     def test_direct_generator_output(self):
+        output_size = self.gen_factory_class().output_bits
         coregen = self.gen
 
         nsamples = 10000
-        output_size = coregen.output_bits
         samples = [next(coregen) for _ in range(nsamples)]
 
         # Check that all samples are in the expected range.
@@ -95,22 +95,11 @@ class CoreGeneratorCommonTests(object):
         # up to three bad counts before failing.
         self.assertLessEqual(bad_counts, 3)
 
-    def test_state_includes_multiplier(self):
-        gen = self.gen
-        state = gen.state
-
-        words = [next(gen) for _ in range(10)]
-
-        gen2 = self.gen_class.from_state(state)
-        same_again = [next(gen2) for _ in range(10)]
-        self.assertEqual(words, same_again)
-
     def test_bad_multiplier(self):
         with self.assertRaises(ValueError):
-            self.gen_class(sequence=0, multiplier=7)
+            self.gen_factory_class(sequence=0, multiplier=7)
 
     def test_advance(self):
-        original_state = self.gen.state
         samples = [next(self.gen) for _ in range(1000)]
 
         # Rewind, check we can produce the exact same samples.
@@ -122,7 +111,7 @@ class CoreGeneratorCommonTests(object):
         # and check we can reproduce them.
         positions = [next(self.gen) % 1000 for _ in range(1000)]
 
-        gen = self.gen_class.from_state(original_state)
+        gen = self.gen_factory_class()(seed=71)
         current_pos = 0
         for next_pos in positions:
             gen.advance(next_pos - current_pos)
@@ -137,9 +126,10 @@ class CoreGeneratorCommonTests(object):
         self.assertEqual(self.gen.state, state)
 
     def test_full_period(self):
+        factory = self.gen_factory_class
         coregen = self.gen
 
-        expected_period = coregen.period
+        expected_period = factory.period
         # This test assumes that the period is a power of 2.
         self.assertIsPowerOfTwo(expected_period)
 
@@ -169,12 +159,12 @@ class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsh_rr_64_32 generator.
     """
-    gen_class = xsh_rr_64_32
+    gen_factory_class = xsh_rr_64_32
 
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class(sequence=54)
-        gen.seed(42)
+        factory = self.gen_factory_class(sequence=54)
+        gen = factory(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsh_rr_64_32.txt')
@@ -184,8 +174,8 @@ class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):
 
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class()
-        gen.seed(123)
+        factory = self.gen_factory_class()
+        gen = factory(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsh_rr_64_32.txt')
@@ -198,12 +188,12 @@ class TestXshRS6432(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsh_rs_64_32 generator.
     """
-    gen_class = xsh_rs_64_32
+    gen_factory_class = xsh_rs_64_32
 
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class(sequence=54)
-        gen.seed(42)
+        factory = self.gen_factory_class(sequence=54)
+        gen = factory(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsh_rs_64_32.txt')
@@ -213,8 +203,8 @@ class TestXshRS6432(CoreGeneratorCommonTests, unittest.TestCase):
 
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class()
-        gen.seed(123)
+        factory = self.gen_factory_class()
+        gen = factory(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsh_rs_64_32.txt')
@@ -227,12 +217,12 @@ class TestXslRR12864(CoreGeneratorCommonTests, unittest.TestCase):
     """
     Tests specific to the xsl_rr_128_64 generator.
     """
-    gen_class = xsl_rr_128_64
+    gen_factory_class = xsl_rr_128_64
 
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class(sequence=54)
-        gen.seed(42)
+        factory = self.gen_factory_class(sequence=54)
+        gen = factory(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsl_rr_128_64.txt')
@@ -242,8 +232,8 @@ class TestXslRR12864(CoreGeneratorCommonTests, unittest.TestCase):
 
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
-        gen = self.gen_class()
-        gen.seed(123)
+        factory = self.gen_factory_class()
+        gen = factory(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsl_rr_128_64.txt')

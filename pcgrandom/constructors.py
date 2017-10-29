@@ -16,9 +16,9 @@
 Convenience all-in-one construction functions.
 """
 from pcgrandom.core_generators import (
-    xsh_rr_64_32_factory,
-    xsh_rs_64_32_factory,
-    xsl_rr_128_64_factory,
+    xsh_rr_64_32,
+    xsh_rs_64_32,
+    xsl_rr_128_64,
 )
 from pcgrandom.random import Random
 
@@ -51,7 +51,7 @@ def PCG_XSH_RR_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsh_rr_64_32_factory(sequence, multiplier),
+        core_generator_factory=xsh_rr_64_32(sequence, multiplier),
     )
 
 
@@ -83,7 +83,7 @@ def PCG_XSH_RS_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsh_rs_64_32_factory(sequence, multiplier),
+        core_generator_factory=xsh_rs_64_32(sequence, multiplier),
     )
 
 
@@ -115,5 +115,5 @@ def PCG_XSL_RR_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsl_rr_128_64_factory(sequence, multiplier),
+        core_generator_factory=xsl_rr_128_64(sequence, multiplier),
     )

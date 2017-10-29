@@ -25,8 +25,8 @@ import operator
 from builtins import range
 
 from pcgrandom.core_generators import (
-    core_generator_from_state,
-    xsh_rr_64_32_factory,
+    generator_factory_from_description,
+    xsh_rr_64_32,
 )
 from pcgrandom.seeding import seed_from_object
 
@@ -61,13 +61,14 @@ class Random(object):
 
     def __init__(self, seed=None, core_generator_factory=None):
         if core_generator_factory is None:
-            core_generator_factory = xsh_rr_64_32_factory()
+            core_generator_factory = xsh_rr_64_32()
         self._core_generator_factory = core_generator_factory
         self.seed(seed)
 
     def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
-        integer_seed = seed_from_object(seed, self._core_generator_factory.seed_bits)
+        integer_seed = seed_from_object(
+            seed, self._core_generator_factory.seed_bits)
         self._core_generator = self._core_generator_factory(integer_seed)
         self.gauss_next = None
 
@@ -79,7 +80,11 @@ class Random(object):
 
     def getstate(self):
         """Return internal state; can be passed to setstate() later."""
-        return self.VERSION, self._core_generator.state, self.gauss_next
+
+        core_generator_state = (
+            self._core_generator_factory.description +
+            (self._core_generator.state,))
+        return self.VERSION, core_generator_state, self.gauss_next
 
     def setstate(self, state):
         """Restore internal state from object returned by getstate()."""
@@ -89,14 +94,23 @@ class Random(object):
                 "setstate() of version {1!r}.".format(
                     state[0], self.VERSION)
             )
+
         core_generator_state, self.gauss_next = state[1:]
-        self._core_generator = core_generator_from_state(core_generator_state)
+
+        description = core_generator_state[:-1]
+        generator_state = core_generator_state[-1]
+
+        self._core_generator_factory = generator_factory_from_description(
+            description)
+        self._core_generator = (
+            self._core_generator_factory.generator_from_state(generator_state)
+        )
 
     # Core sampling functions.
 
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
-        output_bits = self._core_generator.output_bits
+        output_bits = self._core_generator_factory.output_bits
         # Invariant: x is uniformly distributed in range(h).
         x, h = 0, 1
         while True:
@@ -119,7 +133,7 @@ class Random(object):
         if k < 0:
             raise ValueError("Number of bits should be nonnegative.")
 
-        output_bits = self._core_generator.output_bits
+        output_bits = self._core_generator_factory.output_bits
 
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0

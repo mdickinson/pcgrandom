@@ -27,6 +27,12 @@ from pcgrandom import (
     PCG_XSH_RR_V0,
     PCG_XSH_RS_V0,
     PCG_XSL_RR_V0,
+    Random,
+)
+
+from pcgrandom.core_generators import (
+    xsh_rr_64_32,
+    xsl_rr_128_64,
 )
 
 
@@ -558,3 +564,37 @@ class Test_PCG_XSH_RS_V0(TestRandom, unittest.TestCase):
 
 class Test_PCG_XSL_RR_V0(TestRandom, unittest.TestCase):
     gen_class = staticmethod(PCG_XSL_RR_V0)
+
+
+class TestRandomGenerator(unittest.TestCase):
+    """
+    General tests of the Random class, not tied to a specific generator.
+    """
+    def test_restore_state_from_different_generator_factory(self):
+        gen1 = Random(
+            seed=123,
+            core_generator_factory=xsh_rr_64_32(),
+        )
+        state1 = gen1.getstate()
+        gen1.seed(647)
+        sample1 = [gen1.random() for _ in range(10)]
+
+        gen2 = Random(
+            seed=910,
+            core_generator_factory=xsl_rr_128_64(),
+        )
+        state2 = gen2.getstate()
+        sample2 = [gen2.random() for _ in range(10)]
+
+        gen1.setstate(state2)
+        self.assertEqual(
+            [gen1.random() for _ in range(10)],
+            sample2,
+        )
+
+        gen2.setstate(state1)
+        gen2.seed(647)
+        self.assertEqual(
+            [gen2.random() for _ in range(10)],
+            sample1,
+        )
