@@ -20,7 +20,7 @@ import pkgutil
 import unittest
 
 from pcgrandom.core_generators import (
-    generator_factory_from_description,
+    generator_from_description,
     xsh_rr_64_32,
     xsh_rs_64_32,
     xsl_rr_128_64,
@@ -33,7 +33,7 @@ class TestCoreGeneratorFromState(unittest.TestCase):
     """
     def test_recover_from_description(self):
         gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
-        recovered_factory = generator_factory_from_description(
+        recovered_factory = generator_from_description(
             gen_factory.description)
         self.assertEqual(
             recovered_factory.description, gen_factory.description)
@@ -43,7 +43,7 @@ class TestCoreGeneratorFromState(unittest.TestCase):
         gen_factory = xsh_rr_64_32(sequence=38, multiplier=13)
         bogus_description = ("bogus",) + gen_factory.description[1:]
         with self.assertRaises(ValueError):
-            generator_factory_from_description(bogus_description)
+            generator_from_description(bogus_description)
 
 
 class CoreGeneratorCommonTests(object):
@@ -51,7 +51,7 @@ class CoreGeneratorCommonTests(object):
     Tests common to all the core generators, used as a mixin class.
     """
     def setUp(self):
-        self.gen = self.gen_factory_class()(seed=71)
+        self.gen = self.gen_factory_class().stream_from_seed(seed=71)
 
     def test_name_is_unicode(self):
         self.assertIsInstance(self.gen_factory_class().name, type(u''))
@@ -111,7 +111,7 @@ class CoreGeneratorCommonTests(object):
         # and check we can reproduce them.
         positions = [next(self.gen) % 1000 for _ in range(1000)]
 
-        gen = self.gen_factory_class()(seed=71)
+        gen = self.gen_factory_class().stream_from_seed(seed=71)
         current_pos = 0
         for next_pos in positions:
             gen.advance(next_pos - current_pos)
@@ -164,7 +164,7 @@ class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class(sequence=54)
-        gen = factory(42)
+        gen = factory.stream_from_seed(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsh_rr_64_32.txt')
@@ -175,7 +175,7 @@ class TestXshRR6432(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class()
-        gen = factory(123)
+        gen = factory.stream_from_seed(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsh_rr_64_32.txt')
@@ -193,7 +193,7 @@ class TestXshRS6432(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class(sequence=54)
-        gen = factory(42)
+        gen = factory.stream_from_seed(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsh_rs_64_32.txt')
@@ -204,7 +204,7 @@ class TestXshRS6432(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class()
-        gen = factory(123)
+        gen = factory.stream_from_seed(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsh_rs_64_32.txt')
@@ -222,7 +222,7 @@ class TestXslRR12864(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_explicit_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class(sequence=54)
-        gen = factory(42)
+        gen = factory.stream_from_seed(42)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/setseq_xsl_rr_128_64.txt')
@@ -233,7 +233,7 @@ class TestXslRR12864(CoreGeneratorCommonTests, unittest.TestCase):
     def test_agrees_with_reference_implementation_unspecified_sequence(self):
         # Comparison with the C++ PCG reference implementation, version 0.98.
         factory = self.gen_factory_class()
-        gen = factory(123)
+        gen = factory.stream_from_seed(123)
 
         expected_raw = pkgutil.get_data(
             'pcgrandom.test', 'data/oneseq_xsl_rr_128_64.txt')

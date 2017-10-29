@@ -25,7 +25,7 @@ import operator
 from builtins import range
 
 from pcgrandom.core_generators import (
-    generator_factory_from_description,
+    generator_from_description,
     xsh_rr_64_32,
 )
 from pcgrandom.seeding import seed_from_object
@@ -68,7 +68,7 @@ class Random(object):
         """(Re)initialize internal state from integer or string object."""
         integer_seed = seed_from_object(
             seed, self._core_generator.seed_bits)
-        self._stream = self._core_generator(integer_seed)
+        self._stream = self._core_generator.stream_from_seed(integer_seed)
         self.gauss_next = None
 
     def jumpahead(self, n):
@@ -96,9 +96,9 @@ class Random(object):
             )
 
         core_generator_description, stream_state, gauss_next = state[1:]
-        self._core_generator = generator_factory_from_description(
+        self._core_generator = generator_from_description(
             core_generator_description)
-        self._stream = self._core_generator.generator_from_state(stream_state)
+        self._stream = self._core_generator.stream_from_state(stream_state)
         self.gauss_next = gauss_next
 
     # Core sampling functions.
