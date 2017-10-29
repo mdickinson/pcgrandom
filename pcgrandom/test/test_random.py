@@ -573,7 +573,7 @@ class TestRandomGenerator(unittest.TestCase):
     def test_restore_state_from_different_generator_factory(self):
         gen1 = Random(
             seed=123,
-            core_generator_factory=xsh_rr_64_32(),
+            core_generator=xsh_rr_64_32(),
         )
         state1 = gen1.getstate()
         gen1.seed(647)
@@ -581,7 +581,7 @@ class TestRandomGenerator(unittest.TestCase):
 
         gen2 = Random(
             seed=910,
-            core_generator_factory=xsl_rr_128_64(),
+            core_generator=xsl_rr_128_64(),
         )
         state2 = gen2.getstate()
         sample2 = [gen2.random() for _ in range(10)]

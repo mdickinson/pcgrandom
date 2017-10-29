@@ -59,22 +59,22 @@ class Random(object):
     """
     VERSION = u"pcgrandom.Random"
 
-    def __init__(self, seed=None, core_generator_factory=None):
-        if core_generator_factory is None:
-            core_generator_factory = xsh_rr_64_32()
-        self._core_generator_factory = core_generator_factory
+    def __init__(self, seed=None, core_generator=None):
+        if core_generator is None:
+            core_generator = xsh_rr_64_32()
+        self._core_generator = core_generator
         self.seed(seed)
 
     def seed(self, seed=None):
         """(Re)initialize internal state from integer or string object."""
         integer_seed = seed_from_object(
-            seed, self._core_generator_factory.seed_bits)
-        self._core_generator = self._core_generator_factory(integer_seed)
+            seed, self._core_generator.seed_bits)
+        self._stream = self._core_generator(integer_seed)
         self.gauss_next = None
 
     def jumpahead(self, n):
         """Jump ahead or back in the sequence of random numbers."""
-        self._core_generator.advance(n)
+        self._stream.advance(n)
 
     # State management.
 
@@ -82,8 +82,8 @@ class Random(object):
         """Return internal state; can be passed to setstate() later."""
 
         core_generator_state = (
-            self._core_generator_factory.description +
-            (self._core_generator.state,))
+            self._core_generator.description +
+            (self._stream.state,))
         return self.VERSION, core_generator_state, self.gauss_next
 
     def setstate(self, state):
@@ -100,17 +100,17 @@ class Random(object):
         description = core_generator_state[:-1]
         generator_state = core_generator_state[-1]
 
-        self._core_generator_factory = generator_factory_from_description(
+        self._core_generator = generator_factory_from_description(
             description)
-        self._core_generator = (
-            self._core_generator_factory.generator_from_state(generator_state)
+        self._stream = (
+            self._core_generator.generator_from_state(generator_state)
         )
 
     # Core sampling functions.
 
     def _randbelow(self, n):
         """Return a random integer in range(n)."""
-        output_bits = self._core_generator_factory.output_bits
+        output_bits = self._core_generator.output_bits
         # Invariant: x is uniformly distributed in range(h).
         x, h = 0, 1
         while True:
@@ -118,7 +118,7 @@ class Random(object):
             if r <= x:
                 # int call converts small longs to ints on Python 2.
                 return int((x - r) // q)
-            output = next(self._core_generator)
+            output = next(self._stream)
             x, h = x << output_bits | output, r << output_bits
 
     def getrandbits(self, k):
@@ -133,12 +133,12 @@ class Random(object):
         if k < 0:
             raise ValueError("Number of bits should be nonnegative.")
 
-        output_bits = self._core_generator_factory.output_bits
+        output_bits = self._core_generator.output_bits
 
         numwords, excess_bits = -(-k // output_bits), -k % output_bits
         acc = 0
         for _ in range(numwords):
-            output = next(self._core_generator)
+            output = next(self._stream)
             acc = acc << output_bits | output
         # int call converts small longs to ints on Python 2.
         return int(acc >> excess_bits)

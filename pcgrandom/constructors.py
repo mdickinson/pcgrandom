@@ -51,7 +51,7 @@ def PCG_XSH_RR_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsh_rr_64_32(sequence, multiplier),
+        core_generator=xsh_rr_64_32(sequence, multiplier),
     )
 
 
@@ -83,7 +83,7 @@ def PCG_XSH_RS_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsh_rs_64_32(sequence, multiplier),
+        core_generator=xsh_rs_64_32(sequence, multiplier),
     )
 
 
@@ -115,5 +115,5 @@ def PCG_XSL_RR_V0(seed=None, sequence=None, multiplier=None):
     """
     return Random(
         seed=seed,
-        core_generator_factory=xsl_rr_128_64(sequence, multiplier),
+        core_generator=xsl_rr_128_64(sequence, multiplier),
     )

@@ -35,18 +35,15 @@ class TestPCGRandom(unittest.TestCase):
 
     def test_random_class(self):
         gen = pcgrandom.Random()
-        self.assertEqual(gen._core_generator_factory.output_bits, 32)
         # Exercise the generator to make sure nothing bad happens.
         [gen.random() for _ in range(10)]
 
     def test_pcg_32(self):
         gen = pcgrandom.PCG32()
-        self.assertEqual(gen._core_generator_factory.output_bits, 32)
         [gen.random() for _ in range(10)]
 
     def test_pcg_64(self):
         gen = pcgrandom.PCG64()
-        self.assertEqual(gen._core_generator_factory.output_bits, 64)
         [gen.random() for _ in range(10)]
 
     def test_float_generators(self):
