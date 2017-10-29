@@ -94,13 +94,13 @@ class _pcg_stream_base(builtins.object):
         """
         if self._output_previous:
             output = self._output()
-            self.step()
+            self._step()
         else:
-            self.step()
+            self._step()
             output = self._output()
         return output
 
-    def step(self):
+    def _step(self):
         """
         Advance the underlying LCG a single step.
         """
